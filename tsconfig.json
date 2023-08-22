@@ -1,0 +1,23 @@
+{
+    "compilerOptions": {
+        "baseUrl": ".",
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
+        "target": "ESNext",
+        "rootDir": "src",
+        "outDir": "dist",
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "strictNullChecks": true,
+        "skipLibCheck": true,
+        "paths": {
+            "~/*": ["./src/*"]
+        }
+    },
+    "include": [
+        "src/**/*"
+    ],
+    "exclude": [
+        "node_modules"
+    ]
+}

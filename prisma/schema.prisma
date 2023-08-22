@@ -1,0 +1,221 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearch"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  MODERATOR
+  ADMIN
+
+  @@map("user_role")
+}
+
+enum ChatMemberRole {
+  MEMBER
+  ADMIN
+  CREATOR
+
+  @@map("chat_member_role")
+}
+
+enum GeneratedMediaType {
+  TEXT
+  BOOM
+  BALLOON
+  STRETCH
+  FISHEYE
+  DEMOTIVATOR
+  AWARE_SCALE
+
+  @@map("generated_media_type")
+}
+
+enum MediaMIME {
+  PHOTO
+  VIDEO
+  STICKER
+  ANIMATION
+  VIDEO_NOTE
+
+  @@map("media_mime")
+}
+
+enum PackType {
+  TITLES
+  MEDIA
+
+  @@map("pack_type")
+}
+
+enum PackElementType {
+  TEXT
+  PHOTO
+  VIDEO
+  STICKER
+  ANIMATION
+
+  @@map("pack_element_type")
+}
+
+model Session {
+  key   String @id
+  value String
+
+  @@map("sessions")
+}
+
+model User {
+  id                     Int       @id @default(autoincrement())
+  telegramId             BigInt    @unique @map("telegram_id")
+  username               String?   @db.VarChar(32)
+  premium                Boolean   @default(false)
+  role                   UserRole  @default(USER)
+  anonymous              Boolean   @default(false)
+  searchIncluded         Boolean   @default(true)
+  lastGroupContactedAt   DateTime? @db.Timestamp()
+  lastPrivateContactedAt DateTime? @db.Timestamp()
+  updatedAt              DateTime  @updatedAt @map("updated_at")
+  createdAt              DateTime  @default(now()) @map("created_at")
+
+  commandPreferences   UserCommandPreferences[]
+  ownsPacks            Pack[]                   @relation("packs_created_by_user")
+  editsPacks           Pack[]                   @relation("pack_editing_by_user")
+  insertedPackElements PackElement[]
+  generatedMedia       GeneratedMedia[]
+  chatMembers          ChatMember[]
+
+  @@map("users")
+}
+
+model UserCommandPreferences {
+  id          Int      @id @default(autoincrement())
+  userId      Int      @map("user_id")
+  user        User     @relation(fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  name        String   @db.VarChar(32)
+  preferences Json     @default("{}") @db.JsonB
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("user_commands_preferences")
+}
+
+model Chat {
+  id               Int      @id @default(autoincrement())
+  telegramId       BigInt   @unique @map("telegram_id")
+  // ownerTelegramId   BigInt?  @map("owner_telegram_id")
+  // adminsTelegramIds BigInt[] @default([]) @map("admins_telegram_ids")
+  title            String?  @db.VarChar(256)
+  memberCount      Int      @default(0) @map("member_count")
+  disabledCommands String[] @map("disabled_commands") @db.VarChar(32)
+  updatedAt        DateTime @updatedAt @map("updated_at")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  packs              Pack[]               @relation("chat_enabled_packs")
+  members            ChatMember[]
+  generatedMedia     GeneratedMedia[]
+  generatedMediaUses GeneratedMediaUses[]
+
+  @@map("chats")
+}
+
+model ChatMember {
+  id        Int            @id @default(autoincrement())
+  userId    Int            @map("user_id")
+  user      User           @relation(fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  chatId    Int            @map("chat_id")
+  chat      Chat           @relation(fields: [chatId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  role      ChatMemberRole @default(MEMBER)
+  updatedAt DateTime       @default(now()) @map("updated_at")
+  createdAt DateTime       @default(now()) @map("created_at")
+
+  @@unique([userId, chatId])
+  @@map("chat_members")
+}
+
+model Channel {
+  id                Int      @id @default(autoincrement())
+  telegramId        BigInt   @unique @map("telegram_id")
+  // linkedChatTelegramId BigInt @unique @map("linked_chat_telegram_id")
+  creatorTelegramId BigInt?
+  adminsTelegramIds BigInt[] @default([])
+  title             String?
+  memberCount       Int      @default(0) @map("member_count")
+  updatedAt         DateTime @default(now()) @map("updated_at")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  @@map("channel")
+}
+
+model Pack {
+  id                Int           @id @default(autoincrement())
+  type              PackType
+  name              String        @db.VarChar(32)
+  description       String?       @db.VarChar(300)
+  tags              String[]      @db.VarChar(10)
+  bannerFileId      String?       @map("banner_file_id") @db.VarChar(300)
+  elements          PackElement[]
+  default           Boolean       @default(false)
+  private           Boolean       @default(true)
+  everyoneCanInsert Boolean       @default(false) @map("everyone_can_insert")
+  showAuthor        Boolean       @default(true) @map("show_author")
+  authorId          Int?          @map("author_id")
+  author            User?         @relation(fields: [authorId], references: [id], name: "packs_created_by_user", onUpdate: Cascade, onDelete: SetNull)
+  editors           User[]        @relation("pack_editing_by_user")
+  usedInChats       Chat[]        @relation("chat_enabled_packs")
+
+  @@index([type])
+  @@map("packs")
+}
+
+model PackElement {
+  id          Int              @id @default(autoincrement())
+  type        PackElementType
+  content     String           @db.VarChar(300)
+  packId      Int              @map("pack_id")
+  pack        Pack             @relation(fields: [packId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  authorId    Int?             @map("author_id")
+  author      User?            @relation(fields: [authorId], references: [id], onUpdate: Cascade, onDelete: SetNull)
+  usedInMedia GeneratedMedia[] @relation("linked_pack_elements")
+
+  @@map("pack_elements")
+}
+
+model GeneratedMedia {
+  id                 Int                  @id @default(autoincrement())
+  publicId           String               @unique @db.VarChar(24)
+  type               GeneratedMediaType
+  mime               MediaMIME
+  sourceFileId       String               @map("source_file_id") @db.VarChar(300)
+  resultFileId       String               @map("result_file_id") @db.VarChar(300)
+  resultFileUniqueId String               @map("result_file_unique_id") @db.VarChar(300)
+  content            String?              @db.VarChar(2048)
+  authorId           Int?                 @map("author_id")
+  author             User?                @relation(fields: [authorId], references: [id], onUpdate: Cascade, onDelete: SetNull)
+  chatId             Int?                 @map("chat_id")
+  chat               Chat?                @relation(fields: [chatId], references: [id], onUpdate: Cascade, onDelete: SetNull)
+  linkedPackElements PackElement[]        @relation("linked_pack_elements")
+  uses               GeneratedMediaUses[]
+  meta               Json                 @default("{}") @db.Json
+  createdAt          DateTime             @default(now()) @map("created_at") @db.Date
+
+  @@index([sourceFileId], map: "idx_generated_media_source_file_id")
+  @@index([resultFileId], map: "idx_generated_media_result_file_id")
+  @@map("generated_media")
+}
+
+model GeneratedMediaUses {
+  id               Int            @id @default(autoincrement())
+  generatedMediaId Int            @map("generated_media_id")
+  generatedMedia   GeneratedMedia @relation(fields: [generatedMediaId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  chatId           Int?           @map("chat_id")
+  chat             Chat?          @relation(fields: [chatId], references: [id], onUpdate: Cascade, onDelete: SetNull)
+  usedByTelegramId BigInt         @map("used_by_telegram_id")
+  createdAt        DateTime       @default(now())
+
+  @@map("generated_media_uses")
+}
