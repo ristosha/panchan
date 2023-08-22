@@ -48,8 +48,9 @@ command
 
     await mediaTransaction({
       ctx,
-      remove: [inputFile, outputFile],
+      queue: 'scale',
       disableLoader: true,
+      remove: [inputFile, outputFile],
       run: async () => {
         await awareScaleVideo({ inputFile, outputFile, loader, watermark })
         const result = new InputFile(outputFile, fileName)
@@ -88,6 +89,8 @@ command
 
     await mediaTransaction({
       ctx,
+      queue: 'scale',
+      disableLoader: true,
       remove: [inputFile, outputFile],
       run: async () => {
         await awareScaleImage({ inputFile, outputFile, watermark, ...args })

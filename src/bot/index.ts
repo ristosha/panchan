@@ -16,10 +16,10 @@ bot.catch(async ({ ctx, message, name, error }) => {
   logger.error(name)
   logger.error(error)
 
-  await ctx.reply(ctx.t('bot-error')).catch()
+  try {
+    await ctx.reply(ctx.t('bot-error'))
 
-  if (config.BOT_LOG_CHAT_ID != null) {
-    try {
+    if (config.BOT_LOG_CHAT_ID != null) {
       const ctxStr = JSON.stringify(ctx, null, 2)
       const msg = await ctx.forwardMessage(config.BOT_LOG_CHAT_ID).catch()
 
@@ -31,9 +31,9 @@ bot.catch(async ({ ctx, message, name, error }) => {
           reply_to_message_id: msg.message_id
         }
       )
-    } catch (e) {
-      logger.error(e)
     }
+  } catch (e) {
+    logger.error(e)
   }
 })
 

@@ -185,6 +185,11 @@ menu-chat-list-button =
     .invite-bot = ❇️ Add Bot to Chat
 
 # Commands
+rate-limit = 🤬 It seems you're trying to use commands too frequently. Time to slow down!
+queue =
+    Your position in the queue: {$pos}/{$length}
+    Approximately {$estimated} seconds left.
+    .start = You are currently in the queue for processing. Please wait a moment!
 command-aware-scale =
     .prepare = 📥 Downloading video
     .extracting-frames = 🎞️ Extracting frames from video

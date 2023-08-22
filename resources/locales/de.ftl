@@ -188,6 +188,11 @@ menu-chat-list-button =
     .invite-bot = ❇️ Bot zum Chat hinzufügen
 
 # Befehle
+rate-limit = 🤬 Es sieht so aus, als würden Sie Befehle zu häufig verwenden. Zeit, sich zu verlangsamen!
+queue =
+    Ihre Position in der Warteschlange: {$pos}/{$length}
+    Etwa {$estimated} Sekunden verbleiben.
+    .start = Sie befinden sich derzeit in der Warteschlange zur Verarbeitung. Bitte warten Sie einen Moment!
 command-no-media = 
     🥸 Dieser Befehl funktioniert nur mit Mediendaten: 
     {$types}

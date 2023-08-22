@@ -5,7 +5,7 @@ export type Loader = ReturnType<typeof createLoader>
 export function createLoader () {
   let step: string = ''
   let progress = 1
-  let startTime: number | null = Date.now()
+  let startTime: number | null
   const listeners: Array<{
     func: LoaderFunc
     interval: number
