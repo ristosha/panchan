@@ -32,13 +32,10 @@ export async function mediaTransaction (params: MediaTransaction) {
   }
 
   const queue = queues.getQueue(queueName)
-  console.log({ queue })
   let queueMessageId: number | undefined
   let queueChatId: number | undefined
 
-  console.log({ length: queue.length() })
   const queueSize = queue.length() + 1
-
   if (queueSize > 2 || queue.isPending()) {
     const est = queue.calculateEstimatedTime(queue.length())
     const message = await ctx.reply(ctx.t('queue', {

@@ -3,7 +3,6 @@ import { conversations } from '@grammyjs/conversations'
 import { hydrateFiles } from '@grammyjs/files'
 import { hydrate } from '@grammyjs/hydrate'
 import { hydrateReply, parseMode } from '@grammyjs/parse-mode'
-import { limit } from '@grammyjs/ratelimiter'
 import { apiThrottler } from '@grammyjs/transformer-throttler'
 import { Composer } from 'grammy'
 
@@ -18,19 +17,6 @@ plugins.use(hydrate())
 plugins.use(hydrateReply)
 plugins.use(sessions)
 plugins.use(i18n)
-
-plugins.use(limit({
-  timeFrame: 3000,
-  limit: 2,
-  keyGenerator: (ctx) => {
-    if (ctx.callbackQuery != null) return undefined
-    return ctx.from?.id.toString()
-  },
-  onLimitExceeded: (ctx) => {
-    void ctx.reply(ctx.t('rate-limit'))
-  }
-}))
-
 plugins.use(conversations())
 
 const throttler = apiThrottler()

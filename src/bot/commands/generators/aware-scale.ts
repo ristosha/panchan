@@ -3,6 +3,7 @@ import { Composer, InputFile, matchFilter } from 'grammy'
 import { awareScaleImage, awareScaleVideo } from '~/api/generators/aware-scale.js'
 import { createLoader } from '~/api/loader.js'
 import { resizeComposite } from '~/api/schema/composite.js'
+import { rateLimit } from '~/bot/commands/utils/rate-limit.js'
 import getAnimationOrVideoId from '~/bot/helpers/get-animation-or-video-id.js'
 import { mediaTransaction } from '~/bot/helpers/media-transaction.js'
 import noMediaError from '~/bot/helpers/no-media-error.js'
@@ -14,6 +15,8 @@ export const awareScale = new Composer<MyContext>()
 const command = awareScale.command([
   'aware-scale', 'ascale', 'scale', 'жмых'
 ])
+
+command.use(rateLimit)
 
 command
   .on([
@@ -58,7 +61,14 @@ command
           resultFileId,
           resultFileUniqueId
         } = getAnimationOrVideoId(await ctx.replyWithAnimation(result))
-        await saveMedia({ ctx, id, sourceFileId, resultFileId, resultFileUniqueId, type: 'AWARE_SCALE' })
+        await saveMedia({
+          ctx,
+          id,
+          sourceFileId,
+          resultFileId,
+          resultFileUniqueId,
+          type: 'AWARE_SCALE'
+        })
         await msg.delete()
       }
     })
@@ -97,7 +107,15 @@ command
         const result = new InputFile(outputFile, fileName)
         const { photo } = await ctx.replyWithPhoto(result)
         const { file_id: resultFileId, file_unique_id: resultFileUniqueId } = photo[photo.length - 1]
-        await saveMedia({ ctx, id, sourceFileId, resultFileId, resultFileUniqueId, meta: opts, type: 'AWARE_SCALE' })
+        await saveMedia({
+          ctx,
+          id,
+          sourceFileId,
+          resultFileId,
+          resultFileUniqueId,
+          meta: opts,
+          type: 'AWARE_SCALE'
+        })
       }
     })
   })

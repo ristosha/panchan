@@ -1,6 +1,7 @@
 import { Composer, InputFile, matchFilter } from 'grammy'
 
 import { balloonImage, balloonVideo } from '~/api/generators/balloon.js'
+import { rateLimit } from '~/bot/commands/utils/rate-limit.js'
 import { mediaTransaction } from '~/bot/helpers/media-transaction.js'
 import noMediaError from '~/bot/helpers/no-media-error.js'
 import { prepareMediaWithOutput } from '~/bot/helpers/prepare-media.js'
@@ -11,6 +12,8 @@ export const balloon = new Composer<MyContext>()
 const command = balloon.command([
   'balloon', 'ballon', 'balon', 'baloon', 'шар', 'шарик'
 ])
+
+command.use(rateLimit)
 
 command
   .on([

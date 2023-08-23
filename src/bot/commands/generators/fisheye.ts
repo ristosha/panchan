@@ -1,6 +1,7 @@
 import { Composer, InputFile, matchFilter } from 'grammy'
 
 import { fisheyeImage, fisheyeVideo } from '~/api/generators/fisheye.js'
+import { rateLimit } from '~/bot/commands/utils/rate-limit.js'
 import getAnimationOrVideoId from '~/bot/helpers/get-animation-or-video-id.js'
 import { mediaTransaction } from '~/bot/helpers/media-transaction.js'
 import noMediaError from '~/bot/helpers/no-media-error.js'
@@ -12,6 +13,8 @@ export const fisheye = new Composer<MyContext>()
 const command = fisheye.command([
   'fisheye', 'eye', 'feye', 'вриба', 'врыба', 'риба', 'рыба'
 ])
+
+command.use(rateLimit)
 
 command
   .on([

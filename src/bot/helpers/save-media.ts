@@ -1,7 +1,7 @@
 import { type GeneratedMediaType, MediaMIME } from '@prisma/client'
 
 import { type MyContext } from '~/bot/types/context.js'
-import { storage } from '~/storage.js'
+import { storage, type StorageTypes } from '~/storage.js'
 
 export interface SaveMediaParams {
   ctx: MyContext
@@ -10,6 +10,7 @@ export interface SaveMediaParams {
   sourceFileId: string
   resultFileId: string
   resultFileUniqueId: string
+  randomElements?: number[]
   mime?: MediaMIME
   text?: string
   meta?: Record<string, any>
@@ -25,6 +26,7 @@ export async function saveMedia (params: SaveMediaParams) {
     sourceFileId,
     resultFileId,
     resultFileUniqueId,
+    randomElements = undefined,
     mime = detectMIME(ctx)
   } = params
 
@@ -35,7 +37,7 @@ export async function saveMedia (params: SaveMediaParams) {
 
   delete meta._
 
-  await storage.generatedMedia.create({
+  const data: StorageTypes.GeneratedMediaCreateArgs = {
     data: {
       type,
       mime,
@@ -48,7 +50,15 @@ export async function saveMedia (params: SaveMediaParams) {
       publicId: id,
       content: text
     }
-  })
+  }
+
+  if (randomElements != null && Array.isArray(randomElements) && randomElements.length > 0) {
+    data.data.linkedPackElements = {
+      connect: randomElements.map(e => ({ id: e }))
+    }
+  }
+
+  await storage.generatedMedia.create(data)
 }
 
 function detectMIME (ctx: MyContext) {

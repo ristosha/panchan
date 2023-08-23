@@ -1,11 +1,14 @@
 import { Composer } from 'grammy'
 
+import { rateLimit } from '~/bot/commands/utils/rate-limit.js'
 import { getOriginalMediaByCtx } from '~/bot/helpers/get-original-media.js'
 import { bot } from '~/bot/index.js'
 import { type MyContext } from '~/bot/types/context.js'
 
 export const edit = new Composer<MyContext>()
 const command = edit.command(['edit', 'ed', 'ред'])
+
+command.use(rateLimit)
 
 command.on(
   [

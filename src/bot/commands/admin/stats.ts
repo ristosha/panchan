@@ -15,6 +15,7 @@ command.use(async (ctx) => {
     chats,
     chatMember,
     generatedMedia,
+    generatedMediaNonRandom,
     generatedMediaUses,
     packs,
     packElements
@@ -25,6 +26,7 @@ command.use(async (ctx) => {
     storage.chat.count(),
     storage.chatMember.count(),
     storage.generatedMedia.count(),
+    storage.generatedMedia.count({ where: { linkedPackElements: { none: {} } } }),
     storage.generatedMediaUses.count(),
     storage.pack.count(),
     storage.packElement.count()
@@ -49,6 +51,7 @@ command.use(async (ctx) => {
 🗣 Total Chats: ${chats}
 👤 Chat Members: ${chatMember}
 📸 Generated Media: ${generatedMedia}
+📸 Non-random Generated Media: ${generatedMediaNonRandom}
 📲 Media Uses: ${generatedMediaUses}
 📦 Packs: ${packs}
 🎨 Pack Elements: ${packElements}

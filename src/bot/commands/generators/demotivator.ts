@@ -1,6 +1,7 @@
 import { Composer, InputFile, matchFilter } from 'grammy'
 
 import { createDemotivatorImage, createDemotivatorVideo } from '~/api/generators/demotivator.js'
+import { rateLimit } from '~/bot/commands/utils/rate-limit.js'
 import getAnimationOrVideoId from '~/bot/helpers/get-animation-or-video-id.js'
 import { mediaTransaction } from '~/bot/helpers/media-transaction.js'
 import noMediaError from '~/bot/helpers/no-media-error.js'
@@ -9,9 +10,11 @@ import { saveMedia } from '~/bot/helpers/save-media.js'
 import { type MyContext } from '~/bot/types/context.js'
 
 export const demotivator = new Composer<MyContext>()
-const cmd = demotivator.command(['demotivator', 'dem', 'demik'])
+const command = demotivator.command(['demotivator', 'dem', 'demik'])
 
-cmd
+command.use(rateLimit)
+
+command
   .on([
     'msg:video',
     'msg:animation',
@@ -32,8 +35,11 @@ cmd
       sourceFileId,
       fileName,
       opts,
-      watermark
+      watermark,
+      randomElements
     } = await prepareMediaWithOutput(ctx, 'mp4')
+
+    console.log({ randomElements: ctx.state })
 
     await mediaTransaction({
       ctx,
@@ -55,6 +61,7 @@ cmd
           resultFileId,
           resultFileUniqueId,
           text,
+          randomElements,
           meta: opts,
           type: 'DEMOTIVATOR'
         })
@@ -62,7 +69,7 @@ cmd
     })
   })
 
-cmd
+command
   .on([
     'msg:photo',
     'msg:sticker'
@@ -82,7 +89,8 @@ cmd
       sourceFileId,
       fileName,
       opts,
-      watermark
+      watermark,
+      randomElements
     } = await prepareMedia(ctx, 'png')
     await mediaTransaction({
       ctx,
@@ -99,6 +107,7 @@ cmd
           resultFileId,
           resultFileUniqueId,
           text,
+          randomElements,
           meta: opts,
           type: 'DEMOTIVATOR'
         })
@@ -106,4 +115,4 @@ cmd
     })
   })
 
-cmd.use(noMediaError(['photo', 'video', 'animation', 'photo-sticker', 'video-sticker']))
+command.use(noMediaError(['photo', 'video', 'animation', 'photo-sticker', 'video-sticker']))

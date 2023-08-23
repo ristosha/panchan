@@ -1,6 +1,7 @@
 import { Composer, InputFile, matchFilter } from 'grammy'
 
 import { createTextImage, createTextVideo } from '~/api/generators/text.js'
+import { rateLimit } from '~/bot/commands/utils/rate-limit.js'
 import getAnimationOrVideoId from '~/bot/helpers/get-animation-or-video-id.js'
 import { mediaTransaction } from '~/bot/helpers/media-transaction.js'
 import noMediaError from '~/bot/helpers/no-media-error.js'
@@ -12,6 +13,8 @@ export const text = new Composer<MyContext>()
 const command = text.command([
   'text', 'lobster', 'лобстер', 'текст'
 ])
+
+command.use(rateLimit)
 
 command
   .on([
@@ -31,7 +34,8 @@ command
       sourceFileId,
       fileName,
       opts,
-      watermark
+      watermark,
+      randomElements
     } = await prepareMediaWithOutput(ctx, 'mp4')
 
     await mediaTransaction({
@@ -44,7 +48,17 @@ command
           resultFileId,
           resultFileUniqueId
         } = getAnimationOrVideoId(await ctx.replyWithAnimation(result))
-        await saveMedia({ ctx, id, sourceFileId, resultFileId, resultFileUniqueId, text, meta: opts, type: 'TEXT' })
+        await saveMedia({
+          ctx,
+          id,
+          sourceFileId,
+          resultFileId,
+          resultFileUniqueId,
+          text,
+          randomElements,
+          meta: opts,
+          type: 'TEXT'
+        })
       }
     })
   })
@@ -69,7 +83,8 @@ command
       id,
       sourceFileId,
       opts,
-      watermark
+      watermark,
+      randomElements
     } = await prepareMedia(ctx, 'png')
 
     await mediaTransaction({
@@ -80,7 +95,17 @@ command
         const result = new InputFile(buffer, fileName)
         const { photo } = await ctx.replyWithPhoto(result)
         const { file_id: resultFileId, file_unique_id: resultFileUniqueId } = photo[photo.length - 1]
-        await saveMedia({ ctx, id, sourceFileId, resultFileId, resultFileUniqueId, text, meta: opts, type: 'TEXT' })
+        await saveMedia({
+          ctx,
+          id,
+          sourceFileId,
+          resultFileId,
+          resultFileUniqueId,
+          text,
+          randomElements,
+          meta: opts,
+          type: 'TEXT'
+        })
       }
     })
   })

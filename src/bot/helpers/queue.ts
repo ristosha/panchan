@@ -13,7 +13,6 @@ export class Queue {
   private readonly processingTimes: number[] = []
 
   public enqueue (task: Task): number {
-    console.log('ДОБАВЛЯЮ')
     this.queue.push(task)
     void this.dequeue()
     return this.queue.length
@@ -21,8 +20,6 @@ export class Queue {
 
   private async dequeue (): Promise<void> {
     if (this.pendingPromise) return
-    console.log('ОБРАБАТЫВАЮ')
-
     const task = this.queue.shift()
     if (task == null) return
 
@@ -88,8 +85,6 @@ export class QueueManager {
     if (!this.queues.has(queueName)) {
       this.queues.set(queueName, new Queue())
     }
-
-    console.log('Getting queue ', queueName)
 
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     return this.queues.get(queueName)!

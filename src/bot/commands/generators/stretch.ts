@@ -1,6 +1,7 @@
 import { Composer, InputFile, matchFilter } from 'grammy'
 
 import { stretchImage, stretchVideo } from '~/api/generators/stretch.js'
+import { rateLimit } from '~/bot/commands/utils/rate-limit.js'
 import getAnimationOrVideoId from '~/bot/helpers/get-animation-or-video-id.js'
 import { mediaTransaction } from '~/bot/helpers/media-transaction.js'
 import noMediaError from '~/bot/helpers/no-media-error.js'
@@ -12,6 +13,8 @@ export const stretch = new Composer<MyContext>()
 const command = stretch.command([
   'stretch', 'str', 'растянуть', 'раст'
 ])
+
+command.use(rateLimit)
 
 command
   .on([

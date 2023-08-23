@@ -10,16 +10,44 @@ export async function prepareMedia (ctx: MyContext, fileFormat: 'png' | 'mp4' | 
   const inputFile = await file.download()
 
   const opts = parseArgsInMessage(ctx)
-  const text = opts._ ?? ''
+  let text = opts._ ?? ''
+  let randomElements: number[] = []
+  if (text.includes('~+*$33')) {
+    ({ extractedNumbers: randomElements, modifiedInput: text } = extractAndRemoveNumbers(text))
+  }
 
   const { premium = false } = user
   const watermark = !premium
   const fileName = `${config.BOT_FILE_PREFIX}${id}.${fileFormat}`
-  return { file, inputFile, text, id, fileName, watermark, opts, sourceFileId: file.file_id }
+  return { file, inputFile, text, id, fileName, watermark, opts, randomElements, sourceFileId: file.file_id }
 }
 
 export async function prepareMediaWithOutput (ctx: MyContext, fileFormat: 'png' | 'mp4' | 'webm') {
   const result = await prepareMedia(ctx, fileFormat)
   const outputFile = await fs.tempFile(result.fileName)
   return { ...result, outputFile }
+}
+
+function extractAndRemoveNumbers (input: string): { modifiedInput: string, extractedNumbers: number[] } {
+  const pattern = /~\+\*\$33:(\d+)(?::(\d+))?%/
+  const match = input.match(pattern)
+
+  if (match == null) {
+    return { modifiedInput: input, extractedNumbers: [] }
+  }
+
+  const [, firstNumber, secondNumber] = match
+  const extractedNumbers: number[] = []
+
+  if (firstNumber) {
+    extractedNumbers.push(parseInt(firstNumber, 10))
+  }
+
+  if (secondNumber) {
+    extractedNumbers.push(parseInt(secondNumber, 10))
+  }
+
+  const modifiedInput = input.replace(pattern, '')
+
+  return { modifiedInput, extractedNumbers }
 }
