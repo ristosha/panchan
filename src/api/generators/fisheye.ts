@@ -43,6 +43,7 @@ export async function fisheyeVideo (params: FisheyeParams) {
     '-i', '-',
     '-filter_complex', '[0:v]v360=equirect:fisheye:id_fov=360,scale=512:512[v];[v][1:v]overlay=0:0',
     '-aspect', '1:1',
+    '-threads', '4',
     '-c:v', 'libx264',
     '-threads', '4',
     '-preset', 'fast',

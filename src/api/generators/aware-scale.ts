@@ -84,7 +84,7 @@ export async function awareScaleVideo (params: AwareScaleVideoParams) {
   await fs.mkdir(resultDir)
 
   let count = 0
-  const chunks = _.chunk(frames, 10)
+  const chunks = _.chunk(frames, config.AWAIT_SCALE_CHUNK)
   for (const [chunkId, chunk] of chunks.entries()) {
     loader?.update(10 + chunkId / chunks.length * 70, 'processing-chunk')
     const tasks: Array<Promise<void>> = []

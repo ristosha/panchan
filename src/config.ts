@@ -15,6 +15,7 @@ const schema = z.object({
   BOT_MP_PARSE_CHAT_ID: z.coerce.number().nullable(),
   BOT_GUIDE_URL: z.string().default('google.com'),
   BOT_FILE_PREFIX: z.string().default('ppb-'),
+  AWAIT_SCALE_CHUNK: z.coerce.number().default(5),
   FFMPEG: z.string().default('ffmpeg'),
   FFPROBE: z.string().default('ffprobe'),
   IMAGE_MAGICK: z.string().default('magick')
