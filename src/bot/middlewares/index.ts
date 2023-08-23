@@ -1,6 +1,5 @@
 import { Composer } from 'grammy'
 
-import autoQuote from '~/bot/middlewares/auto-quote.js'
 import { captionFix } from '~/bot/middlewares/caption-fix.js'
 import { handleSearch } from '~/bot/middlewares/handle-search.js'
 import { handleUsage } from '~/bot/middlewares/handle-usage.js'
@@ -22,7 +21,7 @@ stateMiddlewares.use(setChannel)
 
 middlewares.use(stateMiddlewares)
 // middlewares.use(autoChatAction())
-middlewares.use(autoQuote())
+// middlewares
 middlewares.use(captionFix)
 middlewares.use(memberUpdate)
 middlewares.use(handleUsage)

@@ -4,13 +4,14 @@ import { rateLimit } from '~/bot/commands/utils/rate-limit.js'
 import { extractMediaExtended } from '~/bot/helpers/extractors.js'
 import getRandomElement from '~/bot/helpers/get-random-element.js'
 import { bot } from '~/bot/index.js'
+import autoQuote from '~/bot/middlewares/auto-quote.js'
 import { type MyContext } from '~/bot/types/context.js'
 
 export const randomDemotivator = new Composer<MyContext>()
 const command = randomDemotivator.command(['rdem', 'рдем', 'рандом'])
 
 command.use(rateLimit)
-
+command.use(autoQuote())
 command.on(
   [
     'msg:animation',

@@ -2,11 +2,13 @@ import { type PackElementType } from '@prisma/client'
 import { Composer } from 'grammy'
 
 import { extractId, extractMedia } from '~/bot/helpers/extractors.js'
+import autoQuote from '~/bot/middlewares/auto-quote.js'
 import { type MyContext } from '~/bot/types/context.js'
 import { storage } from '~/storage.js'
 
 export const editElement = new Composer<MyContext>()
 const edit = editElement.command('editel')
+edit.use(autoQuote())
 
 edit.on(['msg:photo', 'msg:video', 'msg:animation'], async (ctx) => {
   const { id } = extractId(ctx)
