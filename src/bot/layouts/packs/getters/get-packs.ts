@@ -103,11 +103,10 @@ export async function getPublicPacks (type: PackType) {
         { private: false }
       ]
     },
-    orderBy: {
-      usedInChats: {
-        _count: 'desc'
-      }
-    },
+    orderBy: [
+      { default: 'desc' },
+      { usedInChats: { _count: 'desc' } }
+    ],
     select: { id: true, name: true, default: true, tags: true }
   })
   return packs

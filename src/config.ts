@@ -12,6 +12,7 @@ const schema = z.object({
   //  BOT_WEBHOOK_URL: z.string(),
   //  BOT_SERVER_PORT: z.coerce.number(),
   BOT_LOG_CHAT_ID: z.coerce.number().nullable(),
+  BOT_MP_PARSE_CHAT_ID: z.coerce.number().nullable(),
   BOT_GUIDE_URL: z.string().default('google.com'),
   BOT_FILE_PREFIX: z.string().default('ppb-'),
   FFMPEG: z.string().default('ffmpeg'),

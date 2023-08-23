@@ -6,14 +6,16 @@ import { storage } from '~/storage.js'
 
 const ONE_DAY = 24 * 60 * 60 * 1000
 
-const defaultPacks = await storage.pack.findMany({
-  where: {
-    default: true
-  },
-  select: {
-    id: true
-  }
-})
+export const packs = {
+  defaultPacks: await storage.pack.findMany({
+    where: {
+      default: true
+    },
+    select: {
+      id: true
+    }
+  })
+}
 
 function createChatGetter (ctx: MyContext, telegramId: number, title: string) {
   let cachedChat: Chat | null
@@ -26,7 +28,7 @@ function createChatGetter (ctx: MyContext, telegramId: number, title: string) {
         title,
         telegramId,
         packs: {
-          connect: defaultPacks
+          connect: packs.defaultPacks
         }
       },
       update: {}
