@@ -46,7 +46,7 @@ command
         }), {
           parse_mode: 'Markdown'
         })
-      }, 25
+      }, 10
     )
 
     await mediaTransaction({
