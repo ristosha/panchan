@@ -4,6 +4,7 @@ import autoQuote from '~/bot/middlewares/auto-quote.js'
 import { captionFix } from '~/bot/middlewares/caption-fix.js'
 import { handleSearch } from '~/bot/middlewares/handle-search.js'
 import { handleUsage } from '~/bot/middlewares/handle-usage.js'
+import { memberUpdate } from '~/bot/middlewares/member-update.js'
 import { nonEnglishCommands } from '~/bot/middlewares/non-english-commands.js'
 import { replyMediaMerge } from '~/bot/middlewares/reply-media-merge.js'
 import { setChannel } from '~/bot/middlewares/set-channel.js'
@@ -23,6 +24,7 @@ middlewares.use(stateMiddlewares)
 // middlewares.use(autoChatAction())
 middlewares.use(autoQuote())
 middlewares.use(captionFix)
+middlewares.use(memberUpdate)
 middlewares.use(handleUsage)
 middlewares.use(replyMediaMerge)
 middlewares.use(nonEnglishCommands)
