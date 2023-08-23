@@ -12,10 +12,6 @@ import { logger } from '~/logger.js'
 
 export const bot = new Bot<MyContext, MyApi>(config.BOT_TOKEN)
 
-bot.use(async (ctx, next) => {
-  console.log({ beforeState: ctx.message })
-  await next()
-})
 bot.catch(async ({ ctx, message, name, error }) => {
   logger.error(name)
   logger.error(error)

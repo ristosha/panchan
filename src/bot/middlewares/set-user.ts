@@ -36,8 +36,6 @@ export async function setUser (ctx: MyContext, next: NextFunction) {
     activity.lastPrivateContactedAt = new Date()
   }
 
-  console.log({ state: ctx.state })
-
   ctx.state = {
     ...ctx.state,
     user: createUserGetter(telegramId, username, activity)

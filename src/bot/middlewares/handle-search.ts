@@ -30,8 +30,6 @@ handleSearch.inlineQuery(/.*/, async (ctx) => {
   let skip = parseInt(offsetStr)
   if (isNaN(skip)) skip = 0
 
-  console.log({ offsetStr, skip })
-
   let results: GeneratedMedia[]
   if (query == null || query.length === 0) {
     results = await storage.generatedMedia.findMany({

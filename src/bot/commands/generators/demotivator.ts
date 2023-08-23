@@ -39,8 +39,6 @@ command
       randomElements
     } = await prepareMediaWithOutput(ctx, 'mp4')
 
-    console.log({ randomElements: ctx.state })
-
     await mediaTransaction({
       ctx,
       remove: [inputFile, outputFile],
