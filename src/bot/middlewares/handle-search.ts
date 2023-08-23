@@ -93,6 +93,5 @@ function toInlineResult (id: string, generatedMedia: GeneratedMedia): InlineQuer
 function processString (input: string): string {
   const cleanString = input.replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, '').toLowerCase()
   const words = cleanString.split(/\s+/)
-  const processedArray = words.join(':* & ') + ':*'
-  return processedArray
+  return words.join(':* & ') + ':*'
 }

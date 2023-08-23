@@ -12,7 +12,7 @@ export async function prepareMedia (ctx: MyContext, fileFormat: 'png' | 'mp4' | 
   const opts = parseArgsInMessage(ctx)
   let text = opts._ ?? ''
   let randomElements: number[] = []
-  if (text.includes('~+*$33')) {
+  if (text.includes('~+*$33') === true) {
     ({ extractedNumbers: randomElements, modifiedInput: text } = extractAndRemoveNumbers(text))
   }
 
@@ -39,11 +39,11 @@ function extractAndRemoveNumbers (input: string): { modifiedInput: string, extra
   const [, firstNumber, secondNumber] = match
   const extractedNumbers: number[] = []
 
-  if (firstNumber) {
+  if (firstNumber != null) {
     extractedNumbers.push(parseInt(firstNumber, 10))
   }
 
-  if (secondNumber) {
+  if (secondNumber != null) {
     extractedNumbers.push(parseInt(secondNumber, 10))
   }
 
