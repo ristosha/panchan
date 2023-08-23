@@ -45,7 +45,7 @@ export async function balloonVideo (params: BalloonParams) {
     '-i', inputFile,
     ...defaultArgs,
     '-c:v', 'libx264',
-    '-threads', '4',
+    '-threads', String(config.MEDIA_THREADS),
     '-preset', 'fast',
     '-crf', '23',
     '-pix_fmt', 'yuv420p',

@@ -11,6 +11,7 @@ const schema = z.object({
   BOT_ADMIN_ID: z.coerce.number().nullable(),
   //  BOT_WEBHOOK_URL: z.string(),
   //  BOT_SERVER_PORT: z.coerce.number(),
+  MEDIA_THREADS: z.coerce.number().default(2),
   BOT_LOG_CHAT_ID: z.coerce.number().nullable(),
   BOT_MP_PARSE_CHAT_ID: z.coerce.number().nullable(),
   BOT_GUIDE_URL: z.string().default('google.com'),

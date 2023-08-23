@@ -44,7 +44,7 @@ export async function stretchVideo (params: StretchParams) {
     '-filter_complex', '[0:v]v360=equirect:pannini,scale=512:512[v];[v][1:v]overlay=0:0',
     '-aspect', '1:1',
     '-c:v', 'libx264',
-    '-threads', '4',
+    '-threads', String(config.MEDIA_THREADS),
     '-preset', 'fast',
     '-crf', '23',
     '-pix_fmt', 'yuv420p',

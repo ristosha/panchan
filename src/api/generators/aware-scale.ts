@@ -108,7 +108,7 @@ export async function awareScaleVideo (params: AwareScaleVideoParams) {
     '-i', join(resultDir, '%d.png'),
     '-i', '-',
     '-c:v', 'libx264',
-    // '-threads', '4',
+    '-threads', String(config.MEDIA_THREADS),
     '-preset', 'fast',
     '-crf', '23',
     '-pix_fmt', 'yuv420p',
