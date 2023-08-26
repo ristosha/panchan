@@ -68,7 +68,7 @@ export async function createTextVideo (params: CreateTextVideoParams, format: 'w
     '-i', '-', // canvas stream
     '-y',
     '-filter_complex', `[0:v]scale=${width}:${height}[v];[v][1:v]overlay=0:0`,
-    '-threads', '4',
+    '-threads', String(config.MEDIA_THREADS),
     ...(format === 'webm'
       ? [
           '-c:v', 'libvpx',

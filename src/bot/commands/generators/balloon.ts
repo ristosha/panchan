@@ -6,6 +6,7 @@ import { mediaTransaction } from '~/bot/helpers/media-transaction.js'
 import noMediaError from '~/bot/helpers/no-media-error.js'
 import { prepareMediaWithOutput } from '~/bot/helpers/prepare-media.js'
 import { saveMedia } from '~/bot/helpers/save-media.js'
+import autoQuote from '~/bot/middlewares/auto-quote.js'
 import { type MyContext } from '~/bot/types/context.js'
 
 export const balloon = new Composer<MyContext>()
@@ -14,6 +15,7 @@ const command = balloon.command([
 ])
 
 command.use(rateLimit)
+command.use(autoQuote())
 
 command
   .on([

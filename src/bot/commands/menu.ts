@@ -2,11 +2,13 @@ import { Composer } from 'grammy'
 
 import { bot } from '~/bot/index.js'
 import { generalMenu } from '~/bot/layouts/general.js'
+import autoQuote from '~/bot/middlewares/auto-quote.js'
 import runCommandInPrivate from '~/bot/middlewares/run-command-in-private.js'
 import { type MyContext } from '~/bot/types/context.js'
 
 export const menu = new Composer<MyContext>()
 const command = menu.command(['menu', 'start', 'restart'])
+command.use(autoQuote())
 
 command.use(async (ctx, next) => {
   if (ctx.match?.startsWith('command-')) {

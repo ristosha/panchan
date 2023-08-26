@@ -81,7 +81,7 @@ export async function createDemotivatorVideo (params: CreateDemotivatorVideoPara
       `[0:v]scale=380:380,pad=${width}:${height}:29:29:black[v]`,
       '[v][1:v]overlay=0:0,setdar=436/512'
     ].join(';'),
-    '-threads', '4',
+    '-threads', String(config.MEDIA_THREADS),
     '-c:v', 'libx264',
     '-pix_fmt', 'yuv420p',
     '-preset', 'fast',

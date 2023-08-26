@@ -84,7 +84,7 @@ export async function awareScaleVideo (params: AwareScaleVideoParams) {
   await fs.mkdir(resultDir)
 
   let count = 0
-  const chunks = _.chunk(frames, 10)
+  const chunks = _.chunk(frames, config.AWAIT_SCALE_CHUNK)
   for (const [chunkId, chunk] of chunks.entries()) {
     loader?.update(10 + chunkId / chunks.length * 70, 'processing-chunk')
     const tasks: Array<Promise<void>> = []
@@ -108,7 +108,7 @@ export async function awareScaleVideo (params: AwareScaleVideoParams) {
     '-i', join(resultDir, '%d.png'),
     '-i', '-',
     '-c:v', 'libx264',
-    // '-threads', '4',
+    '-threads', String(config.MEDIA_THREADS),
     '-preset', 'fast',
     '-crf', '23',
     '-pix_fmt', 'yuv420p',
