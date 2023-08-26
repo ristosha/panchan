@@ -28,7 +28,7 @@
     "eslint-plugin-simple-import-sort": "^10.0.0",
     "prisma": "^5.1.1",
     "rimraf": "^5.0.1",
-    "sync-dotenv": "^1.0.0",
+    "sync-dotenv": "^2.7.0",
     "tsc-alias": "^1.8.7",
     "tsx": "^3.12.7",
     "typescript": "^5.1.6"
