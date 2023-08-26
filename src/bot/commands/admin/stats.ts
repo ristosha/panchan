@@ -16,6 +16,12 @@ command.use(async (ctx) => {
     chatMember,
     generatedMedia,
     generatedMediaNonRandom,
+    generatedMediaText,
+    generatedMediaStretch,
+    generatedMediaDemotivator,
+    generatedMediaBalloon,
+    generatedMediaFisheye,
+    generatedMediaScale,
     generatedMediaUses,
     packs,
     packElements
@@ -27,14 +33,40 @@ command.use(async (ctx) => {
     storage.chatMember.count(),
     storage.generatedMedia.count(),
     storage.generatedMedia.count({ where: { linkedPackElements: { none: {} } } }),
+    storage.generatedMedia.count({ where: { type: 'TEXT' } }),
+    storage.generatedMedia.count({ where: { type: 'STRETCH' } }),
+    storage.generatedMedia.count({ where: { type: 'DEMOTIVATOR' } }),
+    storage.generatedMedia.count({ where: { type: 'BALLOON' } }),
+    storage.generatedMedia.count({ where: { type: 'FISHEYE' } }),
+    storage.generatedMedia.count({ where: { type: 'AWARE_SCALE' } }),
     storage.generatedMediaUses.count(),
     storage.pack.count(),
     storage.packElement.count()
   ])
 
   const [bigChats, lastChats, mostInstalledPacks] = await Promise.all([
-    storage.chat.findMany({ orderBy: { memberCount: 'desc' }, take: 5 }),
-    storage.chat.findMany({ orderBy: { createdAt: 'desc' }, take: 5 }),
+    storage.chat.findMany({
+      orderBy: {
+        memberCount: 'desc'
+      },
+      include: {
+        _count: {
+          select: { generatedMedia: true, members: true }
+        }
+      },
+      take: 5
+    }),
+    storage.chat.findMany({
+      orderBy: {
+        createdAt: 'desc'
+      },
+      include: {
+        _count: {
+          select: { generatedMedia: true, members: true }
+        }
+      },
+      take: 5
+    }),
     storage.pack.findMany({
       orderBy: { usedInChats: { _count: 'desc' } },
       include: { _count: { select: { usedInChats: true } } },
@@ -56,14 +88,27 @@ command.use(async (ctx) => {
 📦 Packs: ${packs}
 🎨 Pack Elements: ${packElements}
 
+Generated media:
+/text - ${generatedMediaText} times
+/dem - ${generatedMediaDemotivator} times
+/stretch - ${generatedMediaStretch} times
+/fisheye - ${generatedMediaFisheye} times
+/scale - ${generatedMediaScale} times
+/balloon - ${generatedMediaBalloon} times
+
 Most installed Packs:
-${mostInstalledPacks.map(p => `📦 \`${p.name}\` - ${p._count.usedInChats} chats`).join('\n')}
+${mostInstalledPacks
+    .map(p =>
+      `📦 \`${p.name}\` - ${p._count.usedInChats} chats`)
+    .join('\n')}
 
 Most Populous Chats:
-${bigChats.map(chat => `👥 \`${String(chat.title)}\` - ${chat.memberCount}`).join('\n')}
+${bigChats
+    .map(chat => `👥 \`${String(chat.title)}\` - ${chat._count.members}/${chat.memberCount} m. (${chat._count.generatedMedia} media)`)
+    .join('\n')}
 
 Latest Chats:
-${lastChats.map(chat => `🗓  \`${String(chat.title)}\` - ${chat.memberCount}`).join('\n')}
+${lastChats.map(chat => `🗓  \`${String(chat.title)}\` - ${chat._count.members}/${chat.memberCount} m. (${chat._count.generatedMedia} media)`).join('\n')}
 `
 
   await ctx.reply(replyMessage)
