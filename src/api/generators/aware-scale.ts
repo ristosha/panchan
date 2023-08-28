@@ -22,17 +22,24 @@ export interface AwareScaleVideoParams extends AwareScaleParams {
   loader?: Loader
 }
 
+async function getDefaultScale (inputFile: string) {
+  const image = await loadImage(inputFile)
+  return { width: image.width / 3, height: image.height / 3 }
+}
+
 async function awareScaleFrame (params: AwareScaleParams) {
   const {
     inputFile,
     outputFile,
     resize,
-    scale = await loadImage(inputFile)
+    scale = await getDefaultScale(inputFile)
   } = params
 
   const resizeArgs = (resize != null)
     ? ['-resize', `${resize.width}x${resize.height}!`]
-    : []
+    : scale.width < 254 && scale.height < 254
+      ? ['-resize', '254x254!']
+      : []
 
   const args = [
     inputFile,
