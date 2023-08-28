@@ -20,7 +20,8 @@ export const textCompositeMap: CompositeAliasMap<TextOptions> = {
   },
   lgbt: {
     _aliases: ['пидорасы', 'пидорас', 'rainbow'],
-    fontColor: 'gradient(red,orange,yellow,green,blue,purple)'
+    fontColor: 'gradient(red,orange,yellow,green,blue,purple)',
+    strokeWidth: 0
   },
   border: {
     _aliases: ['stroke', 'обводка'],

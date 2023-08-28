@@ -32,7 +32,7 @@ const fallback = fallbackFonts.join(',')
 
 const splitter = new GraphemeSplitter()
 
-function isEmoji (char) {
+function isEmoji (char: string) {
   return char.match(/(?=\p{Emoji})(?!\p{Number})/u) != null
 }
 
@@ -92,8 +92,20 @@ function getTextStats (ctx: SKRSContext2D, lines: string[], lineHeight = 1) {
 export function fitText (
   ctx: SKRSContext2D,
   text: string,
-  { fontSizeMin, fontSizeMax, maxHeight, maxWidth, fontStyle, lineHeight, maxLines, textWrap }: FitTextOptions
+  params: FitTextOptions
 ) {
+  const {
+    fontSizeMin,
+    maxHeight,
+    maxWidth,
+    fontStyle,
+    lineHeight,
+    maxLines, textWrap
+  } = params
+
+  let { fontSizeMax } = params
+  if (fontSizeMax === -1) fontSizeMax = maxWidth / 5
+
   let fontSize = (fontSizeMin + fontSizeMax) / 2
   let lines: string[] = []
   let width: number = 0

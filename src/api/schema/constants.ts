@@ -12,7 +12,7 @@ export const textDefaults: TextOptions = {
   emojiStyle: 'apple',
   fontStyle: 'lobster',
   fontSizeMin: 10,
-  fontSizeMax: 60,
+  fontSizeMax: -1,
   textWrap: true,
   fontColor: 'white',
   maxLines: Infinity,
@@ -21,7 +21,7 @@ export const textDefaults: TextOptions = {
   horizontalAlign: 'center',
   lineHeight: 1.2,
   strokeStyle: 'black',
-  strokeWidth: 0
+  strokeWidth: 1
 }
 
 export const demotivatorDefaults: TextOptions = {
