@@ -31,7 +31,7 @@
     "sync-dotenv": "^2.7.0",
     "tsc-alias": "^1.8.7",
     "tsx": "^3.12.7",
-    "typescript": "^5.1.6"
+    "typescript": "^5.2.2"
   },
   "dependencies": {
     "@grammyjs/auto-retry": "^1.1.1",
