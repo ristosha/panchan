@@ -46,7 +46,7 @@
     "@grammyjs/runner": "^2.0.3",
     "@grammyjs/storage-prisma": "^2.3.0",
     "@grammyjs/transformer-throttler": "^1.2.1",
-    "@napi-rs/canvas": "^0.1.41",
+    "@napi-rs/canvas": "^0.1.44",
     "@prisma/client": "^5.2.0",
     "@supercharge/fs": "^3.4.0",
     "@supercharge/promise-pool": "^3.0.0",
