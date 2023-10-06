@@ -60,7 +60,7 @@
     "husky": "^8.0.3",
     "lodash": "^4.17.21",
     "markdown-escape": "^2.0.0",
-    "nanoid": "^4.0.2",
+    "nanoid": "^5.0.1",
     "pino": "^8.14.1",
     "pino-pretty": "^10.2.0",
     "znv": "^0.3.2"
