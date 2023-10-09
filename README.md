@@ -19,7 +19,8 @@ Every chat can create separated random title/media pack (is used in `/rdem`, `/r
 It automatically handles usages of generated media in chats and shows it in /orig as statistics.
 
 Guide to a full argument list can be found only in Russian [there](https://telegra.ph/Panchan-bot-obnovlenie-08-21).
-You can realize an own alias argument system using my package alias-mapper ([npm](https://www.npmjs.com/package/alias-mapper) | [GitHub](https://github.com/ristosha/alias-mapper)).
+You can make an own alias argument system using my package alias-mapper ([npm](https://www.npmjs.com/package/alias-mapper) | [GitHub](https://github.com/ristosha/alias-mapper)).
+
 ----
 ### Available commands
 For generating:
