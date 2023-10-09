@@ -55,5 +55,8 @@ export async function balloonVideo (params: BalloonParams) {
   ]
 
   const wm = transparentWatermark({ width, height, watermark })
-  await execa(config.FFMPEG, args, { input: await wm.encode('png') })
+  await execa(config.FFMPEG, args, {
+    input: await wm.encode('png'),
+    timeout: 30000
+  })
 }

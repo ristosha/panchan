@@ -129,6 +129,6 @@ export async function awareScaleVideo (params: AwareScaleVideoParams) {
   const wm = transparentWatermark({ width, height, watermark })
 
   loader?.update(90, 'encoding-video')
-  await execa(config.FFMPEG, args, { input: await wm.encode('png') })
+  await execa(config.FFMPEG, args, { input: await wm.encode('png'), timeout: 30000 })
   await fs.removeDir(tempDir)
 }

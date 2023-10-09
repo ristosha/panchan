@@ -95,5 +95,5 @@ export async function createDemotivatorVideo (params: CreateDemotivatorVideoPara
     outputFile
   ]
 
-  await execa(config.FFMPEG, args, { input: overlay })
+  await execa(config.FFMPEG, args, { input: overlay, timeout: 30000 })
 }

@@ -88,6 +88,7 @@ export async function createTextVideo (params: CreateTextVideoParams, format: 'w
   ]
 
   await execa(config.FFMPEG, args, {
-    input: await canvas.encode('png')
+    input: await canvas.encode('png'),
+    timeout: 30000
   })
 }

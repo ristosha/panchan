@@ -56,5 +56,9 @@ export async function fisheyeVideo (params: FisheyeParams) {
   ]
 
   const wm = transparentWatermark({ width: 512, height: 512, watermark })
-  await execa(config.FFMPEG, args, { encoding: null, input: await wm.encode('png') })
+  await execa(config.FFMPEG, args, {
+    timeout: 30000,
+    encoding: null,
+    input: await wm.encode('png')
+  })
 }
