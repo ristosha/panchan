@@ -48,7 +48,7 @@ async function awareScaleFrame (params: AwareScaleParams) {
     outputFile
   ]
 
-  await execa(config.IMAGE_MAGICK, args, { encoding: null })
+  await execa(config.IMAGE_MAGICK, args, { encoding: null, timeout: 20000 })
 }
 
 export async function awareScaleImage (params: AwareScaleParams) {
