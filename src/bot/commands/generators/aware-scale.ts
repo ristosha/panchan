@@ -1,9 +1,11 @@
+import { limit } from '@grammyjs/ratelimiter'
 import { Composer, InputFile, matchFilter } from 'grammy'
 
 import { awareScaleImage, awareScaleVideo } from '~/api/generators/aware-scale.js'
 import { createLoader } from '~/api/loader.js'
 import { resizeComposite } from '~/api/schema/composite.js'
-import { rateLimit } from '~/bot/commands/utils/rate-limit.js'
+import { dupedRequest } from '~/bot/commands/utils/duped-request.js'
+import { type } from '~/bot/commands/utils/type.js'
 import getAnimationOrVideoId from '~/bot/helpers/get-animation-or-video-id.js'
 import { mediaTransaction } from '~/bot/helpers/media-transaction.js'
 import noMediaError from '~/bot/helpers/no-media-error.js'
@@ -17,7 +19,19 @@ const command = awareScale.command([
   'aware-scale', 'ascale', 'scale', 'жмых'
 ])
 
-command.use(rateLimit)
+// custom rate limit
+command.use(limit({
+  timeFrame: 120000,
+  limit: 1,
+  keyGenerator: (ctx) => {
+    if (ctx.callbackQuery != null) return undefined
+    return ctx.from?.id.toString()
+  },
+  onLimitExceeded: (ctx) => {
+    void ctx.reply(ctx.t('command-aware-scale.rate-limit'))
+  }
+}))
+
 command.use(autoQuote())
 
 command
@@ -27,8 +41,15 @@ command
     'msg:sticker:is_video',
     'msg:video_note'
   ])
+  .use(type)
+  .use(dupedRequest(
+    'AWARE_SCALE',
+    ['STICKER', 'VIDEO', 'VIDEO_NOTE', 'ANIMATION'],
+    async (ctx, dupedResultId) => {
+      await ctx.replyWithAnimation(dupedResultId)
+    }
+  ))
   .use(async ctx => {
-    void ctx.replyWithChatAction('typing').catch()
     const {
       inputFile,
       outputFile,

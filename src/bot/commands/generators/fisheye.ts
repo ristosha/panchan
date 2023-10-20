@@ -1,7 +1,9 @@
 import { Composer, InputFile, matchFilter } from 'grammy'
 
 import { fisheyeImage, fisheyeVideo } from '~/api/generators/fisheye.js'
+import { dupedRequest } from '~/bot/commands/utils/duped-request.js'
 import { rateLimit } from '~/bot/commands/utils/rate-limit.js'
+import { type } from '~/bot/commands/utils/type.js'
 import getAnimationOrVideoId from '~/bot/helpers/get-animation-or-video-id.js'
 import { mediaTransaction } from '~/bot/helpers/media-transaction.js'
 import noMediaError from '~/bot/helpers/no-media-error.js'
@@ -25,9 +27,15 @@ command
     'msg:sticker:is_video',
     'msg:video_note'
   ])
+  .use(type)
+  .use(dupedRequest(
+    'FISHEYE',
+    ['STICKER', 'VIDEO', 'VIDEO_NOTE', 'ANIMATION'],
+    async (ctx, dupedResultId) => {
+      await ctx.replyWithAnimation(dupedResultId)
+    }
+  ))
   .use(async ctx => {
-    void ctx.replyWithChatAction('choose_sticker').catch()
-
     const {
       inputFile,
       outputFile,

@@ -1,5 +1,6 @@
 import fs from '@supercharge/fs'
 
+import { TooManyFrames } from '~/api/errors.js'
 import { QueueManager } from '~/bot/helpers/queue.js'
 import { type MyContext } from '~/bot/types/context.js'
 import { logger } from '~/logger.js'
@@ -88,7 +89,11 @@ export async function mediaTransaction (params: MediaTransaction) {
       }
     },
     onError: async (e) => {
-      if (e instanceof Error) {
+      if (e instanceof TooManyFrames) {
+        await ctx.reply(ctx.t('command-aware-scale.too-many-frames', {
+          error: e.message
+        }))
+      } else if (e instanceof Error) {
         const { message } = e
         if (message.includes('BasicParseError')) {
           if (message.includes('Parse color')) {

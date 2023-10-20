@@ -195,6 +195,12 @@ command-aware-scale =
     .extracting-frames = 🎞️ Extracting frames from video
     .processing-chunk = ⌛️ Video processing at *{$progress}%*. Remaining: {$remaining} seconds
     .encoding-video = 🚀 Encoding video and uploading to Telegram...
+    .rate-limit = The Aware Scale can be used no more often than once every 1 minute.
+    .too-many-frames =
+    🙁 Your video is too large ({$error} frames)!
+
+    Processing large videos is only available to users who support the bot.
+
 command-add =
     .no-id = You didn't specify an ID. The command should follow the format `/add pack_id content`
     .not-found = The specified pack was not found. Make sure you have access to it!
@@ -281,10 +287,10 @@ command-no-private =
     This command is not available for execution in chats!
     Press the button to switch to private messages.
     .go = Go ahead!
-command-no-media = 
-    🥸 This command works only with media data: 
+command-no-media =
+    🥸 This command works only with media data:
     {$types}
-    
+
     Send me a media file or reply to a message containing a media file
     .photo = `photo`
     .video = `video`

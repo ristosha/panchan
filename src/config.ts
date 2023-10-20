@@ -17,6 +17,7 @@ const schema = z.object({
   BOT_GUIDE_URL: z.string().default('google.com'),
   BOT_FILE_PREFIX: z.string().default('ppb-'),
   AWAIT_SCALE_CHUNK: z.coerce.number().default(5),
+  AWARE_SCALE_FRAMES_LIMIT: z.coerce.number().default(400),
   FFMPEG: z.string().default('ffmpeg'),
   FFPROBE: z.string().default('ffprobe'),
   IMAGE_MAGICK: z.string().default('magick')

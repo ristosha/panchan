@@ -1,7 +1,9 @@
 import { Composer, InputFile, matchFilter } from 'grammy'
 
 import { balloonImage, balloonVideo } from '~/api/generators/balloon.js'
+import { dupedRequest } from '~/bot/commands/utils/duped-request.js'
 import { rateLimit } from '~/bot/commands/utils/rate-limit.js'
+import { type } from '~/bot/commands/utils/type.js'
 import { mediaTransaction } from '~/bot/helpers/media-transaction.js'
 import noMediaError from '~/bot/helpers/no-media-error.js'
 import { prepareMediaWithOutput } from '~/bot/helpers/prepare-media.js'
@@ -24,9 +26,15 @@ command
     'msg:sticker:is_video',
     'msg:video_note'
   ])
+  .use(type)
+  .use(dupedRequest(
+    'BALLOON',
+    ['STICKER', 'VIDEO', 'VIDEO_NOTE', 'ANIMATION'],
+    async (ctx, dupedResultId) => {
+      await ctx.replyWithVideoNote(dupedResultId)
+    }
+  ))
   .use(async ctx => {
-    void ctx.replyWithChatAction('choose_sticker').catch()
-
     const {
       inputFile,
       outputFile,
@@ -42,7 +50,12 @@ command
       run: async () => {
         await balloonVideo({ inputFile, outputFile, watermark })
         const result = new InputFile(outputFile, fileName)
-        const { video_note: { file_id: resultFileId, file_unique_id: resultFileUniqueId } } = await ctx.replyWithVideoNote(result)
+        const {
+          video_note: {
+            file_id: resultFileId,
+            file_unique_id: resultFileUniqueId
+          }
+        } = await ctx.replyWithVideoNote(result)
         await saveMedia({ ctx, id, sourceFileId, resultFileId, resultFileUniqueId, type: 'BALLOON' })
       }
     })

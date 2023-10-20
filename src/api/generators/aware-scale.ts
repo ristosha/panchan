@@ -4,6 +4,7 @@ import { execa } from 'execa'
 import _ from 'lodash'
 import { join } from 'path'
 
+import { TooManyFrames } from '~/api/errors.js'
 import { transparentWatermark } from '~/api/generators/watermark.js'
 import { type Loader } from '~/api/loader.js'
 import { nearestEven } from '~/api/utils.js'
@@ -48,7 +49,8 @@ async function awareScaleFrame (params: AwareScaleParams) {
     outputFile
   ]
 
-  await execa(config.IMAGE_MAGICK, args, { encoding: null, timeout: 20000 })
+  const { failed, killed } = await execa(config.IMAGE_MAGICK, args, { timeout: 20000 })
+  if (failed || killed) throw new Error()
 }
 
 export async function awareScaleImage (params: AwareScaleParams) {
@@ -76,7 +78,11 @@ export async function awareScaleVideo (params: AwareScaleVideoParams) {
     watermark = true
   } = params
 
-  const { fps } = await getVideoMetadata(inputFile)
+  const { fps, frames: frameCount } = await getVideoMetadata(inputFile)
+  if (frameCount > config.AWARE_SCALE_FRAMES_LIMIT && watermark) {
+    throw new TooManyFrames(`${frameCount}/${config.AWARE_SCALE_FRAMES_LIMIT}`)
+  }
+
   const tempDir = await fs.tempDir()
 
   loader?.update(1, 'extracting-frames')
@@ -129,6 +135,8 @@ export async function awareScaleVideo (params: AwareScaleVideoParams) {
   const wm = transparentWatermark({ width, height, watermark })
 
   loader?.update(90, 'encoding-video')
-  await execa(config.FFMPEG, args, { input: await wm.encode('png'), timeout: 30000 })
+  const { failed, killed } = await execa(config.FFMPEG, args, { input: await wm.encode('png'), timeout: 30000 })
   await fs.removeDir(tempDir)
+
+  if (failed || killed) throw new Error()
 }

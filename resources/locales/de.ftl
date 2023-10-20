@@ -47,7 +47,7 @@ element-count = { $type ->
     *[titles] {title-count}
 }
 
-bot-error = 💀 Etwas ist schief gelaufen... Ich habe den Fehler bereits an den Entwickler gemeldet. 
+bot-error = 💀 Etwas ist schief gelaufen... Ich habe den Fehler bereits an den Entwickler gemeldet.
 
 # Menus
 back-button = ◀️ Zurück
@@ -193,10 +193,10 @@ queue =
     Ihre Position in der Warteschlange: {$pos}/{$length}
     Etwa {$estimated} Sekunden verbleiben.
     .start = Sie befinden sich derzeit in der Warteschlange zur Verarbeitung. Bitte warten Sie einen Moment!
-command-no-media = 
-    🥸 Dieser Befehl funktioniert nur mit Mediendaten: 
+command-no-media =
+    🥸 Dieser Befehl funktioniert nur mit Mediendaten:
     {$types}
-    
+
     Schicken Sie mir eine Mediendatei oder antworten Sie auf eine Nachricht, die eine Mediendatei enthält
     .photo = `Foto`
     .video = `Video`
@@ -285,8 +285,8 @@ command-orig =
 command-random =
     .no-text = Sie haben keinen Text für den Zufall angegeben!
     .no-media = Sie haben keine Medien angehängt!
-command-no-private = 
-    Dieser Befehl kann nicht in Chats ausgeführt werden! 
+command-no-private =
+    Dieser Befehl kann nicht in Chats ausgeführt werden!
     Klicken Sie auf die Schaltfläche, um zu privaten Nachrichten zu wechseln.
     .go = Go!
 command-aware-scale =
@@ -294,12 +294,18 @@ command-aware-scale =
     .extracting-frames = 🎞️ Extrahiere Frames aus dem Video
     .processing-chunk = ⌛️ Videoverarbeitung bei *{$progress}%*. Verbleibend: {$remaining} Sekunden
     .encoding-video = 🚀 Kodiere Video und lade es in Telegram hoch...
+    .rate-limit = Die Aware Scale kann nur alle 1 Minuten verwendet werden.
+    .too-many-frames =
+    🙁 Ihr Video ist zu groß ({$error} Frames)!
+
+    Die Verarbeitung großer Videos steht nur Nutzern zur Verfügung, die den Bot unterstützen.
+
 
 # Unterhaltungen
 conv-create-pack =
     .step-1 =
         {""}*Schritt 1/5*
-        
+
         Wählen Sie den Pack-Typ aus:
 
         `{ media-pack }` - für Fotos, Videos und GIFs
@@ -313,7 +319,7 @@ conv-create-pack =
          ⚠️ _Namen über 32 Zeichen werden gekürzt!_
     .step-3 =
         {""}*Schritt 3/5*
-        
+
         Soll Ihr Pack privat oder öffentlich sein?
 
         Sie können einen privaten Pack nur in Chats verwenden, in denen Sie Administrator sind.
