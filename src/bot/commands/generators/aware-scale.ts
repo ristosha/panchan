@@ -21,7 +21,7 @@ const command = awareScale.command([
 
 // custom rate limit
 command.use(limit({
-  timeFrame: 120000,
+  timeFrame: 60000,
   limit: 1,
   keyGenerator: (ctx) => {
     if (ctx.callbackQuery != null) return undefined
