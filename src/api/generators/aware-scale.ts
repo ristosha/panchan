@@ -1,4 +1,4 @@
-import { Canvas, loadImage } from '@napi-rs/canvas'
+import { Canvas, type Image, loadImage } from '@napi-rs/canvas'
 import fs from '@supercharge/fs'
 import { execa } from 'execa'
 import _ from 'lodash'
@@ -24,8 +24,8 @@ export interface AwareScaleVideoParams extends AwareScaleParams {
 }
 
 async function getDefaultScale (inputFile: string) {
-  const image = await loadImage(inputFile)
-  return { width: image.width / 3, height: image.height / 3 }
+  const { width, height } = await loadImage(inputFile)
+  return { width: width / 3, height: height / 3 }
 }
 
 async function awareScaleFrame (params: AwareScaleParams) {
@@ -57,10 +57,10 @@ export async function awareScaleImage (params: AwareScaleParams) {
   const { outputFile, watermark = true } = params
 
   await awareScaleFrame(params)
-  const scaled = await loadImage(outputFile)
+  const scaled: Image | null = await loadImage(outputFile)
   const { width, height } = scaled
 
-  const canvas = new Canvas(width, height)
+  const canvas: Canvas | null = new Canvas(width, height)
   const ctx = canvas.getContext('2d')
   ctx.drawImage(scaled, 0, 0)
 
@@ -103,7 +103,7 @@ export async function awareScaleVideo (params: AwareScaleVideoParams) {
     const tasks: Array<Promise<void>> = []
     for (const frame of chunk) {
       const scale = Math.floor(512 - (count * 340 / frames.length))
-      const task = awareScaleImage({
+      const task = awareScaleFrame({
         inputFile: join(tempDir, frame),
         outputFile: join(resultDir, `${count}.png`),
         scale: { width: scale, height: scale },
@@ -120,12 +120,13 @@ export async function awareScaleVideo (params: AwareScaleVideoParams) {
     '-r', String(fps),
     '-i', join(resultDir, '%d.png'),
     '-i', '-',
+    '-filter_complex', '[1:v][2:v]overlay=0:0',
     '-c:v', 'libx264',
     '-threads', String(config.MEDIA_THREADS),
     '-preset', 'fast',
     '-crf', '23',
     '-pix_fmt', 'yuv420p',
-    '-map', '1:v',
+    // '-map', '1:v',
     '-map', '0:a?',
     '-c:a', 'copy',
     '-y',
