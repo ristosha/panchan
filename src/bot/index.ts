@@ -1,3 +1,4 @@
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library.js'
 import { Bot, InputFile } from 'grammy'
 
 import { commands } from '~/bot/commands/index.js'
@@ -17,7 +18,9 @@ bot.catch(async ({ ctx, message, name, error }) => {
   logger.error(error)
 
   try {
-    await ctx.reply(ctx.t('bot-error'))
+    if (!(error instanceof PrismaClientKnownRequestError)) {
+      await ctx.reply(ctx.t('bot-error'))
+    }
 
     if (config.BOT_LOG_CHAT_ID != null) {
       const ctxStr = JSON.stringify(ctx, null, 2)
