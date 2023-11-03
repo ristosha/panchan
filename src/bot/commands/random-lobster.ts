@@ -31,7 +31,7 @@ command.on(
 
     const randomElements: number[] = []
     if (textContent == null || textContent.length === 0 || parsed._.length === 0) {
-      const random = await getRandomElement('titles', chatId)
+      const random = await getRandomElement('titles', chatId, 1)
       if (random != null) {
         randomElements.push(random.id)
       }
