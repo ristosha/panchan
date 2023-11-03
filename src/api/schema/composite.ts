@@ -65,6 +65,30 @@ export const textCompositeMap: CompositeAliasMap<TextOptions> = {
       return { marginTop, marginRight, marginBottom, marginLeft }
     }
   },
+  shadow: {
+    _aliases: ['sh', 'тень'],
+    _compute: value => {
+      if (typeof value !== 'string') return {}
+
+      const values = value.split(':')
+      const [shadowColor, blur, offsetX, offsetY] = values
+      const shadowBlur = Number(blur)
+      const shadowOffsetX = Number(offsetX)
+      const shadowOffsetY = Number(offsetY)
+
+      if (values.length === 1) {
+        return { shadowColor }
+      } else if (values.length === 2) {
+        return { shadowColor, shadowBlur }
+      } else if (values.length === 3 && !isNaN(shadowOffsetX)) {
+        return { shadowColor, shadowBlur, shadowOffsetX, shadowOffsetY: shadowOffsetX }
+      } else if (values.length === 4 && !isNaN(shadowOffsetX) && !isNaN(shadowOffsetY)) {
+        return { shadowColor, shadowBlur, shadowOffsetX, shadowOffsetY }
+      }
+
+      return { shadowColor, shadowBlur }
+    }
+  },
   'bottom-left': { _aliases: ['низ-лево', 'нижній-лівий'], verticalAlign: 'bottom', horizontalAlign: 'left' },
   'bottom-center': { _aliases: ['низ-центр', 'нижній-центр'], verticalAlign: 'bottom', horizontalAlign: 'center' },
   'bottom-right': { _aliases: ['низ-право', 'нижній-правий'], verticalAlign: 'bottom', horizontalAlign: 'right' },

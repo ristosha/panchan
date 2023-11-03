@@ -226,6 +226,13 @@ export function multiline (ctx: SKRSContext2D, text: string, opts: TextOptions) 
     ctx.fillStyle = opts.fontColor
   }
 
+  if (opts.shadowColor != null) {
+    ctx.shadowColor = opts.shadowColor
+    ctx.shadowBlur = opts.shadowBlur
+    ctx.shadowOffsetX = opts.shadowOffsetX
+    ctx.shadowOffsetY = opts.shadowOffsetY
+  }
+
   drawQueue.forEach(l => {
     const x = l.x - opts.marginLeft + opts.marginRight
     const y = l.y - opts.marginTop + opts.marginBottom

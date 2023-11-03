@@ -26,7 +26,11 @@ export const textOptions = z.object({
   maxLines: z.coerce.number().default(3),
   textWrap: z.coerce.boolean().default(true),
   strokeWidth: z.coerce.number().default(0),
-  strokeStyle: z.string().default('black')
+  strokeStyle: z.string().default('black'),
+  shadowColor: z.string().nullable().default('black'),
+  shadowBlur: z.coerce.number().default(15),
+  shadowOffsetX: z.coerce.number().default(0),
+  shadowOffsetY: z.coerce.number().default(4)
 })
 
 type TextOptionsInferred = z.infer<typeof textOptions>

@@ -21,7 +21,11 @@ export const textDefaults: TextOptions = {
   horizontalAlign: 'center',
   lineHeight: 1.2,
   strokeStyle: 'black',
-  strokeWidth: 1
+  strokeWidth: 0,
+  shadowBlur: 15,
+  shadowColor: 'black',
+  shadowOffsetX: 0,
+  shadowOffsetY: 4
 }
 
 export const demotivatorDefaults: TextOptions = {
@@ -45,5 +49,9 @@ export const demotivatorDefaults: TextOptions = {
   textWrap: true,
   maxLines: 6, // 3,
   strokeWidth: 0,
-  strokeStyle: 'black'
+  strokeStyle: 'black',
+  shadowColor: null,
+  shadowBlur: 0,
+  shadowOffsetX: 0,
+  shadowOffsetY: 0
 }
