@@ -5,7 +5,6 @@ import { multiline } from '~/api/generators/text/multiline.js'
 import { getOppositeCorner, transparentWatermark } from '~/api/generators/watermark.js'
 import { textDefaults } from '~/api/schema/constants.js'
 import { type TextOptions, textOptions } from '~/api/schema/text.js'
-import { nearestEven } from '~/api/utils.js'
 import { getVideoMetadata } from '~/api/video.js'
 import { config } from '~/config.js'
 
@@ -53,8 +52,16 @@ export async function createTextVideo (params: CreateTextVideoParams, format: 'w
     opts = {}
   } = params
   let { width, height, duration } = meta ?? await getVideoMetadata(inputFile)
-  width = nearestEven(width)
-  height = nearestEven(height)
+
+  if (height <= width) {
+    const oldWidth = width
+    width = 512
+    height = Math.round((height / oldWidth) * width)
+  } else {
+    const oldHeight = height
+    height = 512
+    width = Math.round((width / oldHeight) * height)
+  }
 
   const canvas = new Canvas(width, height)
   const ctx = canvas.getContext('2d')
@@ -67,6 +74,7 @@ export async function createTextVideo (params: CreateTextVideoParams, format: 'w
     '-i', inputFile, // video stream
     '-i', '-', // canvas stream
     '-y',
+    '-threads', '4',
     '-filter_complex', `[0:v]scale=${width}:${height}[v];[v][1:v]overlay=0:0`,
     '-threads', String(config.MEDIA_THREADS),
     ...(format === 'webm'
@@ -89,6 +97,6 @@ export async function createTextVideo (params: CreateTextVideoParams, format: 'w
 
   await execa(config.FFMPEG, args, {
     input: await canvas.encode('png'),
-    timeout: 30000
+    timeout: 45000
   })
 }

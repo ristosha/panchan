@@ -2,7 +2,11 @@ import { type PackElementType } from '@prisma/client'
 
 import { storage, type StorageTypes } from '~/storage.js'
 
-export default async function (type: 'titles' | 'media', chatId?: number) {
+function countLines (str: string): number {
+  return str.split('\n').length
+}
+
+export default async function getRandomElement (type: 'titles' | 'media', chatId?: number, maxLines?: number, tries = 0) {
   const inArray: PackElementType[] = type === 'titles'
     ? ['TEXT']
     : ['VIDEO', 'ANIMATION', 'PHOTO']
@@ -31,6 +35,13 @@ export default async function (type: 'titles' | 'media', chatId?: number) {
 
   const el = await storage.packElement.findFirst({ where, skip })
   if (el == null) return null
+
+  if (maxLines != null && type === 'titles' && countLines(el.content) > maxLines) {
+    if (tries > 5) return null
+
+    const res = await getRandomElement(type, chatId, maxLines, tries + 1)
+    return res
+  }
 
   return el
 }
