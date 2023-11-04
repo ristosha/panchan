@@ -12,7 +12,7 @@ export const textDefaults: TextOptions = {
   emojiStyle: 'apple',
   fontStyle: 'lobster',
   fontSizeMin: 10,
-  fontSizeMax: 60,
+  fontSizeMax: -1,
   textWrap: true,
   fontColor: 'white',
   maxLines: Infinity,
