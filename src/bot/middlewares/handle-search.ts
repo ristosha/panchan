@@ -1,7 +1,8 @@
-import { type GeneratedMedia, type MediaMIME } from '@prisma/client'
+import { type GeneratedMedia, type MediaMIME, type PackElementType } from '@prisma/client'
 import { Composer } from 'grammy'
 import { type InlineQueryResult } from 'grammy/types'
 
+import { parseArgs } from '~/bot/helpers/parse-args.js'
 import { type MyContext } from '~/bot/types/context.js'
 import { storage, type StorageTypes } from '~/storage.js'
 
@@ -37,15 +38,42 @@ handleSearch.inlineQuery(/.*/, async (ctx) => {
       skip
     })
   } else {
-    results = await storage.generatedMedia.findMany({
-      ...input,
-      skip,
-      where: {
-        content: {
-          search: processString(query)
+    const args = parseArgs(query)
+    const searchArgs = { ...input, skip }
+
+    if (args.rtitle === true || args.rmedia === true) {
+      const types: PackElementType[] = []
+      if (args.rtitle === true) types.push('TEXT')
+      if (args.rmedia === true) types.push('PHOTO', 'STICKER', 'ANIMATION', 'VIDEO')
+
+      searchArgs.where = {
+        ...searchArgs.where,
+        linkedPackElements: {
+          some: {
+            type: {
+              in: types
+            }
+          }
         }
       }
-    })
+    }
+
+    if (args.sortdate === true) {
+      searchArgs.orderBy = {
+        createdAt: 'desc'
+      }
+    }
+
+    if (args._.length > 0) {
+      searchArgs.where = {
+        ...searchArgs.where,
+        content: {
+          search: processString(args._)
+        }
+      }
+    }
+
+    results = await storage.generatedMedia.findMany(searchArgs)
   }
 
   const answer = results
