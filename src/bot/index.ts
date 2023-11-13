@@ -46,5 +46,4 @@ bot.use(plugins)
 bot.use(middlewares)
 bot.use(conversations)
 bot.use(layouts)
-
 bot.use(commands)

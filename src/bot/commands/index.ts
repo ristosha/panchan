@@ -13,6 +13,7 @@ import { orig } from '~/bot/commands/orig.js'
 import { promote } from '~/bot/commands/promote.js'
 import { randomDemotivator } from '~/bot/commands/random-demotivator.js'
 import { randomLobster } from '~/bot/commands/random-lobster.js'
+import { reroll } from '~/bot/commands/reroll.js'
 import { reset } from '~/bot/commands/reset.js'
 import { type MyContext } from '~/bot/types/context.js'
 import { config } from '~/config.js'
@@ -27,6 +28,7 @@ commands.use(randomLobster)
 
 commands.use(orig)
 commands.use(edit)
+commands.use(reroll)
 
 commands.use(addElement)
 commands.use(editElement)

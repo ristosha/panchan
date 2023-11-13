@@ -9,7 +9,7 @@ import autoQuote from '~/bot/middlewares/auto-quote.js'
 import { type MyContext } from '~/bot/types/context.js'
 
 export const randomDemotivator = new Composer<MyContext>()
-const command = randomDemotivator.command(['rdem', 'рдем', 'рандом'])
+const command = randomDemotivator.command(['rdem', 'rdemotivator', 'рдем', 'рандом'])
 
 command.use(rateLimit)
 command.use(autoQuote())
