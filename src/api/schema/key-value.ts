@@ -36,6 +36,7 @@ export const textParamsMap: KeyValueAliasMap<TextOptions> = {
   },
   textWrap: {
     _aliases: ['fit', 'подгонка', 'подгон', 'переносить'],
+    _castTo: 'boolean',
     true: ['yes', 'on', 'да', 't', 'y'],
     false: ['no', 'off', 'нет', 'f', 'n']
   },
