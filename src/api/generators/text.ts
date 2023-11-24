@@ -7,6 +7,7 @@ import { textDefaults } from '~/api/schema/constants.js'
 import { type TextOptions, textOptions } from '~/api/schema/text.js'
 import { getVideoMetadata } from '~/api/video.js'
 import { config } from '~/config.js'
+import { nearestEven } from "~/api/utils.js";
 
 export interface CreateTextImageParams {
   inputFile: string
@@ -56,11 +57,11 @@ export async function createTextVideo (params: CreateTextVideoParams, format: 'w
   if (height <= width) {
     const oldWidth = width
     width = 512
-    height = Math.round((height / oldWidth) * width)
+    height = nearestEven(Math.round((height / oldWidth) * width))
   } else {
     const oldHeight = height
     height = 512
-    width = Math.round((width / oldHeight) * height)
+    width = nearestEven(Math.round((width / oldHeight) * height))
   }
 
   const canvas = new Canvas(width, height)
