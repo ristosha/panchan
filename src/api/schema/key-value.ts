@@ -31,12 +31,6 @@ export const textParamsMap: KeyValueAliasMap<TextOptions> = {
     _aliases: ['fontheight', 'font-height', 'fh', 'line-height', 'lineheight', 'lh', 'высота-строки', 'высстр'],
     _castTo: 'number'
   },
-  video: {
-    _aliases: ['audio'],
-    _castTo: 'boolean',
-    true: ['yes', 'on', 'да', 't', 'y'],
-    false: ['no', 'off', 'нет', 'f', 'n']
-  },
   emojiStyle: {
     _aliases: ['emoji']
   },
