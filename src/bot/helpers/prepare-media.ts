@@ -16,6 +16,10 @@ export async function prepareMedia (ctx: MyContext, fileFormat: 'png' | 'mp4' | 
     ({ extractedNumbers: randomElements, modifiedInput: text } = extractAndRemoveNumbers(text))
   }
 
+  if (opts.video != null && typeof video === 'string') {
+    opts.video = Boolean(opts.video)
+  }
+
   const { premium = false } = user
   const watermark = !premium
   const fileName = `${config.BOT_FILE_PREFIX}${id}.${fileFormat}`
