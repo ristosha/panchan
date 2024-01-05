@@ -16,7 +16,7 @@ export async function prepareMedia (ctx: MyContext, fileFormat: 'png' | 'mp4' | 
     ({ extractedNumbers: randomElements, modifiedInput: text } = extractAndRemoveNumbers(text))
   }
 
-  if (opts.video != null && typeof video === 'string') {
+  if (opts.video != null && typeof opts.video === 'string') {
     opts.video = Boolean(opts.video)
   }
 
