@@ -11,6 +11,8 @@ export const handleSearch = new Composer<MyContext>()
 handleSearch.inlineQuery(/.*/, async (ctx) => {
   const { query, offset: offsetStr } = ctx.inlineQuery
 
+  await ctx.state.chatMember?.()
+
   let skip = parseInt(offsetStr)
   if (isNaN(skip)) skip = 0
 
