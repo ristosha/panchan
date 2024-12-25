@@ -8,28 +8,63 @@ import { storage, type StorageTypes } from '~/storage.js'
 
 export const handleSearch = new Composer<MyContext>()
 
-const input: StorageTypes.GeneratedMediaFindManyArgs = {
-  where: {
-    mime: {
-      in: ['PHOTO', 'ANIMATION']
-    },
-    author: {
-      searchIncluded: true
-    }
-  },
-  orderBy: {
-    uses: {
-      _count: 'desc'
-    }
-  },
-  take: 30
-}
-
 handleSearch.inlineQuery(/.*/, async (ctx) => {
   const { query, offset: offsetStr } = ctx.inlineQuery
 
   let skip = parseInt(offsetStr)
   if (isNaN(skip)) skip = 0
+
+  const input: StorageTypes.GeneratedMediaFindManyArgs = {
+    where: {
+      mime: {
+        in: ['PHOTO', 'ANIMATION']
+      },
+      author: {
+        searchIncluded: true
+      },
+      OR: [
+        {
+          chat: {
+            members: {
+              some: {
+                user: {
+                  telegramId: ctx.inlineQuery.from.id
+                }
+              }
+            }
+          }
+        },
+        {
+          uses: {
+            some: {
+              usedByTelegramId: ctx.inlineQuery.from.id
+            }
+          }
+        },
+        {
+          uses: {
+            some: {
+              chat: {
+                members: {
+                  some: {
+                    user: {
+                      telegramId: ctx.inlineQuery.from.id
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    orderBy: {
+      uses: {
+        _count: 'desc'
+      }
+    },
+    take: 30
+  }
 
   let results: GeneratedMedia[]
   if (query == null || query.length === 0) {
