@@ -24,7 +24,11 @@ function createUserGetter (telegramId: number, username: string | undefined, act
 }
 
 export async function setUser (ctx: MyContext, next: NextFunction) {
-  if ((ctx.from == null) || ctx.from.is_bot) return
+  if (ctx.from == null) return
+
+  if (ctx.from.is_bot && !config.allowedBotIds.includes(ctx.from.id)) {
+    return
+  }
 
   const { id: telegramId, username } = ctx.from
   const activity: Activity = {}

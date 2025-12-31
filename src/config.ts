@@ -20,7 +20,8 @@ const schema = z.object({
   AWARE_SCALE_FRAMES_LIMIT: z.coerce.number().default(400),
   FFMPEG: z.string().default('ffmpeg'),
   FFPROBE: z.string().default('ffprobe'),
-  IMAGE_MAGICK: z.string().default('magick')
+  IMAGE_MAGICK: z.string().default('magick'),
+  ALLOWED_BOT_IDS: z.string().default('')
 })
 
 export function parseConfig (env: NodeJS.ProcessEnv) {
@@ -29,7 +30,11 @@ export function parseConfig (env: NodeJS.ProcessEnv) {
     ...config,
     LOTTIE_CONVERT: resolve('python ./scripts/python-lottie/bin/lottie_convert.py'),
     isDev: config.NODE_ENV === 'development',
-    isProd: config.NODE_ENV === 'production'
+    isProd: config.NODE_ENV === 'production',
+    allowedBotIds: config.ALLOWED_BOT_IDS
+        .split(',')
+        .map(id => parseInt(id.trim()))
+        .filter(id => !isNaN(id))
   }
 }
 
