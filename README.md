@@ -1,60 +1,55 @@
 # panchan
-Telegram bot for image/video processing:
-- Demotivator
-- Text overlay with custom parameters
-- Aware scale
-- Balloon (v360)
-- Fisheye (v360)
-- Stretch
-- Concatenate boom video (not made yet) 
 
-[Last running version of bot in Telegram (may not work)](https://t.me/panchanporjatbot)
+Telegram мем-бот (демотиваторы, текст/лобстер, aware-scale/seam-carving, balloon/fisheye/stretch, boom).
+Генерация на ImageMagick (`-liquid-rescale`, собирается с liblqr) + ffmpeg + `@napi-rs/canvas`.
 
-Based on FFmpeg, ImageMagick, Prisma and Grammy.
+## Стек
 
-It can add watermark to all processed media and has localization to other languages (en, ru, de, uk).
+- **Bun** — рантайм, TS выполняется напрямую (без сборки)
+- **grammY** (+ runner, conversations v2, menu, i18n, files, hydrate, parse-mode, ratelimiter, throttler)
+- **Drizzle ORM** + PostgreSQL 18 (драйвер `bun-sql`)
+- **Biome** (lint + format), **lefthook** (git-хуки)
+- **zod** — валидация конфига, **pino** — логи
 
-Every chat can create separated random title/media pack (is used in `/rdem`, `/rlobster`commands) and moderate it.  
+## Архитектура
 
-It automatically handles usages of generated media in chats and shows it in /orig as statistics.
+```
+src/
+  platform/        инфраструктура: config, database (drizzle), logger
+  repositories/    доступ к данным (Drizzle), вся БД-логика здесь
+  services/        движок генерации (чистые трансформации) + очередь
+  bot/             транспорт: index (composition root), plugins, middlewares,
+                   commands, conversations, layouts (меню), core, helpers
+  scripts/         healthcheck, prune (ретеншен)
+migrations/        drizzle-kit миграции
+resources/         шрифты, шаблоны, локали (i18n)
+```
 
-Guide to a full argument list can be found only in Russian [there](https://telegra.ph/Panchan-bot-obnovlenie-08-21).
-You can make an own alias argument system using my package alias-mapper ([npm](https://www.npmjs.com/package/alias-mapper) | [GitHub](https://github.com/ristosha/alias-mapper)).
+## Запуск (dev)
 
-----
-### Available commands
-For generating:
-- `/scale`
-- `/balloon`
-- `/fisheye`
-- `/stretch`
-- `/text`, `/lobster`
-- `/orig` - get original media chain
-- `/edit` - edit dem/text generated media
+```bash
+bun install
+cp .env.example .env   # заполнить BOT_TOKEN, DATABASE_URL, ...
+bun run db:migrate
+bun run dev
+```
 
-For randomized media:
-- `/rdem`
-- `/rlobster`, `/rtext`
+## Скрипты
 
-For title/media packs:
-- `/menu` - open menu to create a pack
-- `/add <pack id> <new random title>`
-- `/editel <element id> <new title content>`
-- `/promote <pack id>` - reply to a message of required user to allow him to edit your pack
-- `/demote <pack id>` - reversed version of previous command
-- `/refresh` - passively update chat member to enable pack in a chat list
+- `bun run dev` / `bun run start` — бот
+- `bun run types` — `tsc --noEmit`
+- `bun run check` — biome (lint+format, autofix)
+- `bun run db:generate` / `db:migrate` / `db:studio` — Drizzle
+- `bun run prune` — чистка старых сессий / media_uses (по TTL из env)
 
-For bot admin:
-- `/add_as_json <pack id>` - attach json array file to add all content to pack
-- `/premium` - reply to user to remove watermark from their media
-- `/set_default <pack id>` - enable/disable default status of pack
-- `/stats` - provide statistics of bot as a message
+## Деплой
 
-Specify a channel id in env for auto upload media to first default media pack.
+`docker-compose.prod.yml` — три сервиса: `postgres` (pg18), `migrator` (one-shot
+`drizzle-kit migrate`), `bot`. Образ multi-stage: отдельный стейдж компилирует
+ImageMagick+liblqr, рантайм — slim `oven/bun:1-alpine` (non-root, healthcheck).
+Секреты — только через `.env` (не запекаются в слой).
 
-----
-### Installation
-Just use Docker Compose to run bot. 
-1. Pull the repository
-2. Create `.docker.env` file following `.docker.env.example` format.
-3. Use `docker-compose up -d` for detach run. It may take some minutes to build ImageMagick from source.
+```bash
+cp .env.example .env   # заполнить
+docker compose -f docker-compose.prod.yml up -d --build
+```

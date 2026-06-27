@@ -1,0 +1,1334 @@
+{
+	"id": "ffd8d98c-b608-4416-ace6-b646c00469ab",
+	"prevId": "00000000-0000-0000-0000-000000000000",
+	"version": "7",
+	"dialect": "postgresql",
+	"tables": {
+		"public.channel": {
+			"name": "channel",
+			"schema": "",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "serial",
+					"primaryKey": true,
+					"notNull": true
+				},
+				"telegram_id": {
+					"name": "telegram_id",
+					"type": "bigint",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"creatorTelegramId": {
+					"name": "creatorTelegramId",
+					"type": "bigint",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"adminsTelegramIds": {
+					"name": "adminsTelegramIds",
+					"type": "bigint[]",
+					"primaryKey": false,
+					"notNull": false,
+					"default": "'{}'"
+				},
+				"title": {
+					"name": "title",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"member_count": {
+					"name": "member_count",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true,
+					"default": 0
+				},
+				"updated_at": {
+					"name": "updated_at",
+					"type": "timestamp (3)",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "now()"
+				},
+				"created_at": {
+					"name": "created_at",
+					"type": "timestamp (3)",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "now()"
+				}
+			},
+			"indexes": {
+				"channel_telegram_id_key": {
+					"name": "channel_telegram_id_key",
+					"columns": [
+						{
+							"expression": "telegram_id",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": true,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				}
+			},
+			"foreignKeys": {},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"policies": {},
+			"checkConstraints": {},
+			"isRLSEnabled": false
+		},
+		"public._chat_enabled_packs": {
+			"name": "_chat_enabled_packs",
+			"schema": "",
+			"columns": {
+				"A": {
+					"name": "A",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"B": {
+					"name": "B",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true
+				}
+			},
+			"indexes": {
+				"_chat_enabled_packs_AB_unique": {
+					"name": "_chat_enabled_packs_AB_unique",
+					"columns": [
+						{
+							"expression": "A",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						},
+						{
+							"expression": "B",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": true,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				},
+				"_chat_enabled_packs_B_index": {
+					"name": "_chat_enabled_packs_B_index",
+					"columns": [
+						{
+							"expression": "B",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				}
+			},
+			"foreignKeys": {
+				"_chat_enabled_packs_A_chats_id_fk": {
+					"name": "_chat_enabled_packs_A_chats_id_fk",
+					"tableFrom": "_chat_enabled_packs",
+					"tableTo": "chats",
+					"columnsFrom": ["A"],
+					"columnsTo": ["id"],
+					"onDelete": "cascade",
+					"onUpdate": "cascade"
+				},
+				"_chat_enabled_packs_B_packs_id_fk": {
+					"name": "_chat_enabled_packs_B_packs_id_fk",
+					"tableFrom": "_chat_enabled_packs",
+					"tableTo": "packs",
+					"columnsFrom": ["B"],
+					"columnsTo": ["id"],
+					"onDelete": "cascade",
+					"onUpdate": "cascade"
+				}
+			},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"policies": {},
+			"checkConstraints": {},
+			"isRLSEnabled": false
+		},
+		"public.chat_members": {
+			"name": "chat_members",
+			"schema": "",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "serial",
+					"primaryKey": true,
+					"notNull": true
+				},
+				"user_id": {
+					"name": "user_id",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"chat_id": {
+					"name": "chat_id",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"role": {
+					"name": "role",
+					"type": "chat_member_role",
+					"typeSchema": "public",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "'MEMBER'"
+				},
+				"updated_at": {
+					"name": "updated_at",
+					"type": "timestamp (3)",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "now()"
+				},
+				"created_at": {
+					"name": "created_at",
+					"type": "timestamp (3)",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "now()"
+				}
+			},
+			"indexes": {
+				"chat_members_user_id_chat_id_key": {
+					"name": "chat_members_user_id_chat_id_key",
+					"columns": [
+						{
+							"expression": "user_id",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						},
+						{
+							"expression": "chat_id",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": true,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				},
+				"chat_members_chat_id_idx": {
+					"name": "chat_members_chat_id_idx",
+					"columns": [
+						{
+							"expression": "chat_id",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				}
+			},
+			"foreignKeys": {
+				"chat_members_user_id_users_id_fk": {
+					"name": "chat_members_user_id_users_id_fk",
+					"tableFrom": "chat_members",
+					"tableTo": "users",
+					"columnsFrom": ["user_id"],
+					"columnsTo": ["id"],
+					"onDelete": "cascade",
+					"onUpdate": "cascade"
+				},
+				"chat_members_chat_id_chats_id_fk": {
+					"name": "chat_members_chat_id_chats_id_fk",
+					"tableFrom": "chat_members",
+					"tableTo": "chats",
+					"columnsFrom": ["chat_id"],
+					"columnsTo": ["id"],
+					"onDelete": "cascade",
+					"onUpdate": "cascade"
+				}
+			},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"policies": {},
+			"checkConstraints": {},
+			"isRLSEnabled": false
+		},
+		"public.chats": {
+			"name": "chats",
+			"schema": "",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "serial",
+					"primaryKey": true,
+					"notNull": true
+				},
+				"telegram_id": {
+					"name": "telegram_id",
+					"type": "bigint",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"title": {
+					"name": "title",
+					"type": "varchar(256)",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"member_count": {
+					"name": "member_count",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true,
+					"default": 0
+				},
+				"disabled_commands": {
+					"name": "disabled_commands",
+					"type": "varchar(32)[]",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"updated_at": {
+					"name": "updated_at",
+					"type": "timestamp (3)",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "now()"
+				},
+				"created_at": {
+					"name": "created_at",
+					"type": "timestamp (3)",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "now()"
+				}
+			},
+			"indexes": {
+				"chats_telegram_id_key": {
+					"name": "chats_telegram_id_key",
+					"columns": [
+						{
+							"expression": "telegram_id",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": true,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				}
+			},
+			"foreignKeys": {},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"policies": {},
+			"checkConstraints": {},
+			"isRLSEnabled": false
+		},
+		"public.generated_media": {
+			"name": "generated_media",
+			"schema": "",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "serial",
+					"primaryKey": true,
+					"notNull": true
+				},
+				"publicId": {
+					"name": "publicId",
+					"type": "varchar(24)",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"type": {
+					"name": "type",
+					"type": "generated_media_type",
+					"typeSchema": "public",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"mime": {
+					"name": "mime",
+					"type": "media_mime",
+					"typeSchema": "public",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"source_file_id": {
+					"name": "source_file_id",
+					"type": "varchar(300)",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"result_file_id": {
+					"name": "result_file_id",
+					"type": "varchar(300)",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"result_file_unique_id": {
+					"name": "result_file_unique_id",
+					"type": "varchar(300)",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"content": {
+					"name": "content",
+					"type": "varchar(2048)",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"author_id": {
+					"name": "author_id",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"chat_id": {
+					"name": "chat_id",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"meta": {
+					"name": "meta",
+					"type": "jsonb",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "'{}'::jsonb"
+				},
+				"created_at": {
+					"name": "created_at",
+					"type": "timestamp with time zone",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "now()"
+				}
+			},
+			"indexes": {
+				"generated_media_publicId_key": {
+					"name": "generated_media_publicId_key",
+					"columns": [
+						{
+							"expression": "publicId",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": true,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				},
+				"idx_generated_media_source_file_id": {
+					"name": "idx_generated_media_source_file_id",
+					"columns": [
+						{
+							"expression": "source_file_id",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				},
+				"idx_generated_media_result_file_id": {
+					"name": "idx_generated_media_result_file_id",
+					"columns": [
+						{
+							"expression": "result_file_id",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				},
+				"idx_generated_media_result_file_unique_id": {
+					"name": "idx_generated_media_result_file_unique_id",
+					"columns": [
+						{
+							"expression": "result_file_unique_id",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				},
+				"generated_media_type_idx": {
+					"name": "generated_media_type_idx",
+					"columns": [
+						{
+							"expression": "type",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				},
+				"generated_media_author_id_idx": {
+					"name": "generated_media_author_id_idx",
+					"columns": [
+						{
+							"expression": "author_id",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				},
+				"generated_media_chat_id_idx": {
+					"name": "generated_media_chat_id_idx",
+					"columns": [
+						{
+							"expression": "chat_id",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				},
+				"generated_media_content_fts_idx": {
+					"name": "generated_media_content_fts_idx",
+					"columns": [
+						{
+							"expression": "to_tsvector('russian', coalesce(\"content\", ''))",
+							"asc": true,
+							"isExpression": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "gin",
+					"with": {}
+				}
+			},
+			"foreignKeys": {
+				"generated_media_author_id_users_id_fk": {
+					"name": "generated_media_author_id_users_id_fk",
+					"tableFrom": "generated_media",
+					"tableTo": "users",
+					"columnsFrom": ["author_id"],
+					"columnsTo": ["id"],
+					"onDelete": "set null",
+					"onUpdate": "cascade"
+				},
+				"generated_media_chat_id_chats_id_fk": {
+					"name": "generated_media_chat_id_chats_id_fk",
+					"tableFrom": "generated_media",
+					"tableTo": "chats",
+					"columnsFrom": ["chat_id"],
+					"columnsTo": ["id"],
+					"onDelete": "set null",
+					"onUpdate": "cascade"
+				}
+			},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"policies": {},
+			"checkConstraints": {},
+			"isRLSEnabled": false
+		},
+		"public.generated_media_uses": {
+			"name": "generated_media_uses",
+			"schema": "",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "serial",
+					"primaryKey": true,
+					"notNull": true
+				},
+				"generated_media_id": {
+					"name": "generated_media_id",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"chat_id": {
+					"name": "chat_id",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"used_by_telegram_id": {
+					"name": "used_by_telegram_id",
+					"type": "bigint",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"createdAt": {
+					"name": "createdAt",
+					"type": "timestamp (3)",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "now()"
+				}
+			},
+			"indexes": {
+				"generated_media_uses_generated_media_id_idx": {
+					"name": "generated_media_uses_generated_media_id_idx",
+					"columns": [
+						{
+							"expression": "generated_media_id",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				},
+				"generated_media_uses_used_by_telegram_id_idx": {
+					"name": "generated_media_uses_used_by_telegram_id_idx",
+					"columns": [
+						{
+							"expression": "used_by_telegram_id",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				},
+				"generated_media_uses_chat_id_idx": {
+					"name": "generated_media_uses_chat_id_idx",
+					"columns": [
+						{
+							"expression": "chat_id",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				},
+				"generated_media_uses_created_at_idx": {
+					"name": "generated_media_uses_created_at_idx",
+					"columns": [
+						{
+							"expression": "createdAt",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				}
+			},
+			"foreignKeys": {
+				"generated_media_uses_generated_media_id_generated_media_id_fk": {
+					"name": "generated_media_uses_generated_media_id_generated_media_id_fk",
+					"tableFrom": "generated_media_uses",
+					"tableTo": "generated_media",
+					"columnsFrom": ["generated_media_id"],
+					"columnsTo": ["id"],
+					"onDelete": "cascade",
+					"onUpdate": "cascade"
+				},
+				"generated_media_uses_chat_id_chats_id_fk": {
+					"name": "generated_media_uses_chat_id_chats_id_fk",
+					"tableFrom": "generated_media_uses",
+					"tableTo": "chats",
+					"columnsFrom": ["chat_id"],
+					"columnsTo": ["id"],
+					"onDelete": "set null",
+					"onUpdate": "cascade"
+				}
+			},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"policies": {},
+			"checkConstraints": {},
+			"isRLSEnabled": false
+		},
+		"public._linked_pack_elements": {
+			"name": "_linked_pack_elements",
+			"schema": "",
+			"columns": {
+				"A": {
+					"name": "A",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"B": {
+					"name": "B",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true
+				}
+			},
+			"indexes": {
+				"_linked_pack_elements_AB_unique": {
+					"name": "_linked_pack_elements_AB_unique",
+					"columns": [
+						{
+							"expression": "A",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						},
+						{
+							"expression": "B",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": true,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				},
+				"_linked_pack_elements_B_index": {
+					"name": "_linked_pack_elements_B_index",
+					"columns": [
+						{
+							"expression": "B",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				}
+			},
+			"foreignKeys": {
+				"_linked_pack_elements_A_generated_media_id_fk": {
+					"name": "_linked_pack_elements_A_generated_media_id_fk",
+					"tableFrom": "_linked_pack_elements",
+					"tableTo": "generated_media",
+					"columnsFrom": ["A"],
+					"columnsTo": ["id"],
+					"onDelete": "cascade",
+					"onUpdate": "cascade"
+				},
+				"_linked_pack_elements_B_pack_elements_id_fk": {
+					"name": "_linked_pack_elements_B_pack_elements_id_fk",
+					"tableFrom": "_linked_pack_elements",
+					"tableTo": "pack_elements",
+					"columnsFrom": ["B"],
+					"columnsTo": ["id"],
+					"onDelete": "cascade",
+					"onUpdate": "cascade"
+				}
+			},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"policies": {},
+			"checkConstraints": {},
+			"isRLSEnabled": false
+		},
+		"public._pack_editing_by_user": {
+			"name": "_pack_editing_by_user",
+			"schema": "",
+			"columns": {
+				"A": {
+					"name": "A",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"B": {
+					"name": "B",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true
+				}
+			},
+			"indexes": {
+				"_pack_editing_by_user_AB_unique": {
+					"name": "_pack_editing_by_user_AB_unique",
+					"columns": [
+						{
+							"expression": "A",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						},
+						{
+							"expression": "B",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": true,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				},
+				"_pack_editing_by_user_B_index": {
+					"name": "_pack_editing_by_user_B_index",
+					"columns": [
+						{
+							"expression": "B",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				}
+			},
+			"foreignKeys": {
+				"_pack_editing_by_user_A_packs_id_fk": {
+					"name": "_pack_editing_by_user_A_packs_id_fk",
+					"tableFrom": "_pack_editing_by_user",
+					"tableTo": "packs",
+					"columnsFrom": ["A"],
+					"columnsTo": ["id"],
+					"onDelete": "cascade",
+					"onUpdate": "cascade"
+				},
+				"_pack_editing_by_user_B_users_id_fk": {
+					"name": "_pack_editing_by_user_B_users_id_fk",
+					"tableFrom": "_pack_editing_by_user",
+					"tableTo": "users",
+					"columnsFrom": ["B"],
+					"columnsTo": ["id"],
+					"onDelete": "cascade",
+					"onUpdate": "cascade"
+				}
+			},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"policies": {},
+			"checkConstraints": {},
+			"isRLSEnabled": false
+		},
+		"public.pack_elements": {
+			"name": "pack_elements",
+			"schema": "",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "serial",
+					"primaryKey": true,
+					"notNull": true
+				},
+				"type": {
+					"name": "type",
+					"type": "pack_element_type",
+					"typeSchema": "public",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"content": {
+					"name": "content",
+					"type": "varchar(300)",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"pack_id": {
+					"name": "pack_id",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"author_id": {
+					"name": "author_id",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false
+				}
+			},
+			"indexes": {
+				"pack_elements_pack_id_idx": {
+					"name": "pack_elements_pack_id_idx",
+					"columns": [
+						{
+							"expression": "pack_id",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				},
+				"pack_elements_author_id_idx": {
+					"name": "pack_elements_author_id_idx",
+					"columns": [
+						{
+							"expression": "author_id",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				}
+			},
+			"foreignKeys": {
+				"pack_elements_pack_id_packs_id_fk": {
+					"name": "pack_elements_pack_id_packs_id_fk",
+					"tableFrom": "pack_elements",
+					"tableTo": "packs",
+					"columnsFrom": ["pack_id"],
+					"columnsTo": ["id"],
+					"onDelete": "cascade",
+					"onUpdate": "cascade"
+				},
+				"pack_elements_author_id_users_id_fk": {
+					"name": "pack_elements_author_id_users_id_fk",
+					"tableFrom": "pack_elements",
+					"tableTo": "users",
+					"columnsFrom": ["author_id"],
+					"columnsTo": ["id"],
+					"onDelete": "set null",
+					"onUpdate": "cascade"
+				}
+			},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"policies": {},
+			"checkConstraints": {},
+			"isRLSEnabled": false
+		},
+		"public.packs": {
+			"name": "packs",
+			"schema": "",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "serial",
+					"primaryKey": true,
+					"notNull": true
+				},
+				"type": {
+					"name": "type",
+					"type": "pack_type",
+					"typeSchema": "public",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"name": {
+					"name": "name",
+					"type": "varchar(32)",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"description": {
+					"name": "description",
+					"type": "varchar(300)",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"tags": {
+					"name": "tags",
+					"type": "varchar(10)[]",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"banner_file_id": {
+					"name": "banner_file_id",
+					"type": "varchar(300)",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"default": {
+					"name": "default",
+					"type": "boolean",
+					"primaryKey": false,
+					"notNull": true,
+					"default": false
+				},
+				"private": {
+					"name": "private",
+					"type": "boolean",
+					"primaryKey": false,
+					"notNull": true,
+					"default": true
+				},
+				"everyone_can_insert": {
+					"name": "everyone_can_insert",
+					"type": "boolean",
+					"primaryKey": false,
+					"notNull": true,
+					"default": false
+				},
+				"show_author": {
+					"name": "show_author",
+					"type": "boolean",
+					"primaryKey": false,
+					"notNull": true,
+					"default": true
+				},
+				"author_id": {
+					"name": "author_id",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false
+				}
+			},
+			"indexes": {
+				"packs_type_idx": {
+					"name": "packs_type_idx",
+					"columns": [
+						{
+							"expression": "type",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				},
+				"packs_author_id_idx": {
+					"name": "packs_author_id_idx",
+					"columns": [
+						{
+							"expression": "author_id",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				}
+			},
+			"foreignKeys": {
+				"packs_author_id_users_id_fk": {
+					"name": "packs_author_id_users_id_fk",
+					"tableFrom": "packs",
+					"tableTo": "users",
+					"columnsFrom": ["author_id"],
+					"columnsTo": ["id"],
+					"onDelete": "set null",
+					"onUpdate": "cascade"
+				}
+			},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"policies": {},
+			"checkConstraints": {},
+			"isRLSEnabled": false
+		},
+		"public.sessions": {
+			"name": "sessions",
+			"schema": "",
+			"columns": {
+				"key": {
+					"name": "key",
+					"type": "text",
+					"primaryKey": true,
+					"notNull": true
+				},
+				"value": {
+					"name": "value",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"updated_at": {
+					"name": "updated_at",
+					"type": "timestamp with time zone",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "now()"
+				}
+			},
+			"indexes": {
+				"sessions_updated_at_idx": {
+					"name": "sessions_updated_at_idx",
+					"columns": [
+						{
+							"expression": "updated_at",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				}
+			},
+			"foreignKeys": {},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"policies": {},
+			"checkConstraints": {},
+			"isRLSEnabled": false
+		},
+		"public.user_commands_preferences": {
+			"name": "user_commands_preferences",
+			"schema": "",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "serial",
+					"primaryKey": true,
+					"notNull": true
+				},
+				"user_id": {
+					"name": "user_id",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"name": {
+					"name": "name",
+					"type": "varchar(32)",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"preferences": {
+					"name": "preferences",
+					"type": "jsonb",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "'{}'::jsonb"
+				},
+				"updated_at": {
+					"name": "updated_at",
+					"type": "timestamp (3)",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "now()"
+				}
+			},
+			"indexes": {},
+			"foreignKeys": {
+				"user_commands_preferences_user_id_users_id_fk": {
+					"name": "user_commands_preferences_user_id_users_id_fk",
+					"tableFrom": "user_commands_preferences",
+					"tableTo": "users",
+					"columnsFrom": ["user_id"],
+					"columnsTo": ["id"],
+					"onDelete": "cascade",
+					"onUpdate": "cascade"
+				}
+			},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"policies": {},
+			"checkConstraints": {},
+			"isRLSEnabled": false
+		},
+		"public.users": {
+			"name": "users",
+			"schema": "",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "serial",
+					"primaryKey": true,
+					"notNull": true
+				},
+				"telegram_id": {
+					"name": "telegram_id",
+					"type": "bigint",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"username": {
+					"name": "username",
+					"type": "varchar(32)",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"premium": {
+					"name": "premium",
+					"type": "boolean",
+					"primaryKey": false,
+					"notNull": true,
+					"default": false
+				},
+				"role": {
+					"name": "role",
+					"type": "user_role",
+					"typeSchema": "public",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "'USER'"
+				},
+				"anonymous": {
+					"name": "anonymous",
+					"type": "boolean",
+					"primaryKey": false,
+					"notNull": true,
+					"default": false
+				},
+				"searchIncluded": {
+					"name": "searchIncluded",
+					"type": "boolean",
+					"primaryKey": false,
+					"notNull": true,
+					"default": true
+				},
+				"lastGroupContactedAt": {
+					"name": "lastGroupContactedAt",
+					"type": "timestamp",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"lastPrivateContactedAt": {
+					"name": "lastPrivateContactedAt",
+					"type": "timestamp",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"updated_at": {
+					"name": "updated_at",
+					"type": "timestamp (3)",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "now()"
+				},
+				"created_at": {
+					"name": "created_at",
+					"type": "timestamp (3)",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "now()"
+				}
+			},
+			"indexes": {
+				"users_telegram_id_key": {
+					"name": "users_telegram_id_key",
+					"columns": [
+						{
+							"expression": "telegram_id",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": true,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				}
+			},
+			"foreignKeys": {},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"policies": {},
+			"checkConstraints": {},
+			"isRLSEnabled": false
+		}
+	},
+	"enums": {
+		"public.chat_member_role": {
+			"name": "chat_member_role",
+			"schema": "public",
+			"values": ["MEMBER", "ADMIN", "CREATOR"]
+		},
+		"public.generated_media_type": {
+			"name": "generated_media_type",
+			"schema": "public",
+			"values": ["TEXT", "BOOM", "BALLOON", "STRETCH", "FISHEYE", "DEMOTIVATOR", "AWARE_SCALE"]
+		},
+		"public.media_mime": {
+			"name": "media_mime",
+			"schema": "public",
+			"values": ["PHOTO", "VIDEO", "STICKER", "ANIMATION", "VIDEO_NOTE"]
+		},
+		"public.pack_element_type": {
+			"name": "pack_element_type",
+			"schema": "public",
+			"values": ["TEXT", "PHOTO", "VIDEO", "STICKER", "ANIMATION"]
+		},
+		"public.pack_type": {
+			"name": "pack_type",
+			"schema": "public",
+			"values": ["TITLES", "MEDIA"]
+		},
+		"public.user_role": {
+			"name": "user_role",
+			"schema": "public",
+			"values": ["USER", "MODERATOR", "ADMIN"]
+		}
+	},
+	"schemas": {},
+	"sequences": {},
+	"roles": {},
+	"policies": {},
+	"views": {},
+	"_meta": {
+		"columns": {},
+		"schemas": {},
+		"tables": {}
+	}
+}

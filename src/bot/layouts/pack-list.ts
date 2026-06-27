@@ -1,89 +1,96 @@
-import { type PackType } from '@prisma/client'
-import { deleteMenuFromContext, MenuTemplate } from 'grammy-inline-menu'
+import { Menu } from '@grammyjs/menu'
 
-import { getOwnPacks, getPublicPacks } from '~/bot/layouts/packs/getters/get-packs.js'
-import { pack } from '~/bot/layouts/packs/pack.js'
-import { backButtons } from '~/bot/layouts/utils.js'
-import { type MyContext } from '~/bot/types/context.js'
+import type { MyContext } from '@/bot/types/context'
 
-function createPackMenu (type: PackType) {
-  const packList = new MenuTemplate<MyContext>(ctx => ({
-    text: ctx.t('menu-pack-list', { type: type.toLowerCase() }),
-    parse_mode: 'Markdown'
-  }))
+import { openPack, PACKS_PER_PAGE, safeEditText } from './shared'
+import { packState } from './state'
 
-  packList.interact(
-    ctx => ctx.t('menu-pack-list-button.create'),
-    'create',
-    {
-      do: async (ctx) => {
-        await ctx.answerCallbackQuery().catch()
-        await deleteMenuFromContext(ctx)
-        await ctx.conversation.enter('create-pack')
-        return false
-      }
-    }
-  )
+/** Pack list (own / public) for the current pack type. Replaces legacy `pack-list`. */
+export const packListMenu = new Menu<MyContext>('pack-list')
 
-  packList.select(
-    'mode',
-    ['own', 'public'],
-    {
-      columns: 2,
-      buttonText: (ctx, key) => ctx.t(`menu-pack-list-button.${key}`),
-      isSet: (ctx, key) => {
-        return ctx.session.data.menu.packMode === key ||
-          (key === 'public' && ctx.session.data.menu.packMode !== 'own') // not initialized
-      },
-      set: (ctx, key) => {
-        ctx.session.data.menu.packMode = key as 'own' | 'public'
-        return true
-      }
-    }
-  )
-
-  packList.chooseIntoSubmenu(
-    'pack',
-    async ctx => {
-      const isOwn = ctx.session.data?.menu?.packMode === 'own'
-      const packs = isOwn
-        ? await getOwnPacks(type, (await ctx.state.user()).id)
-        : await getPublicPacks(type)
-      ctx.state.data.packs = packs
-      return packs.map(p => p.id)
-    },
-    pack,
-    {
-      columns: 1,
-      maxRows: 7,
-      getCurrentPage: (ctx) => ctx.session.data.menu.packPage,
-      setPage: (ctx, page) => {
-        ctx.session.data.menu.packPage = page
-      },
-      buttonText: ({ state }, id) => {
-        const {
-          default: isDefault = false,
-          tags = [],
-          name = 'Unnamed'
-        } = state.data.packs.find((p: { id: number }) => String(p.id) === id) ?? {}
-
-        let emoji = ''
-        if (isDefault != null && (Boolean(isDefault))) {
-          emoji += '🍀'
-        }
-        if ((tags as any[]).includes('nsfw')) {
-          emoji += '🔞'
-        }
-
-        return `${emoji.length > 0 ? emoji + ' ' : ''}${String(name)}`
-      }
-    }
-  )
-
-  packList.manualRow(backButtons)
-
-  return packList
+async function modeLabel(ctx: MyContext, key: 'own' | 'public'): Promise<string> {
+	const state = await packState(ctx)
+	const active = state.mode === key
+	return `${active ? '✅ ' : ''}${ctx.t(`menu-pack-list-button.${key}`)}`
 }
 
-export const titlePackList = createPackMenu('TITLES')
-export const mediaPackList = createPackMenu('MEDIA')
+packListMenu
+	.text(
+		ctx => ctx.t('menu-pack-list-button.create'),
+		async ctx => {
+			await ctx.menu.close()
+			await ctx.conversation.enter('pack-create')
+		},
+	)
+	.row()
+	.text(
+		ctx => modeLabel(ctx, 'own'),
+		async ctx => {
+			const state = await packState(ctx)
+			state.mode = 'own'
+			state.packPage = 1
+			ctx.menu.update()
+		},
+	)
+	.text(
+		ctx => modeLabel(ctx, 'public'),
+		async ctx => {
+			const state = await packState(ctx)
+			state.mode = 'public'
+			state.packPage = 1
+			ctx.menu.update()
+		},
+	)
+	.row()
+
+packListMenu.dynamic(async (ctx, range) => {
+	const state = await packState(ctx)
+	const userId = (await ctx.state.user()).id
+
+	const packs =
+		state.mode === 'own'
+			? await ctx.deps.repos.packs.getOwnPacks(state.type, userId)
+			: await ctx.deps.repos.packs.getPublicPacks(state.type)
+
+	const totalPages = Math.max(1, Math.ceil(packs.length / PACKS_PER_PAGE))
+	if (state.packPage > totalPages) state.packPage = 1
+	const page = state.packPage
+	const pageItems = packs.slice((page - 1) * PACKS_PER_PAGE, page * PACKS_PER_PAGE)
+
+	for (const p of pageItems) {
+		let emoji = ''
+		if (p.default) emoji += '🍀'
+		if ((p.tags ?? []).includes('nsfw')) emoji += '🔞'
+		const label = `${emoji ? `${emoji} ` : ''}${p.name ?? 'Unnamed'}`
+		range
+			.submenu({ text: label, payload: String(p.id) }, 'pack-view', async ctx => {
+				await openPack(ctx, p.id)
+			})
+			.row()
+	}
+
+	if (totalPages > 1) {
+		range
+			.text('⬅️', async ctx => {
+				const s = await packState(ctx)
+				s.packPage = s.packPage > 1 ? s.packPage - 1 : totalPages
+				ctx.menu.update()
+			})
+			.text(`${page}/${totalPages}`, async ctx => {
+				await ctx.answerCallbackQuery().catch(() => {})
+			})
+			.text('➡️', async ctx => {
+				const s = await packState(ctx)
+				s.packPage = s.packPage < totalPages ? s.packPage + 1 : 1
+				ctx.menu.update()
+			})
+			.row()
+	}
+})
+
+packListMenu.back(
+	ctx => ctx.t('back-button'),
+	async ctx => {
+		await safeEditText(ctx, ctx.t('menu-general'))
+	},
+)

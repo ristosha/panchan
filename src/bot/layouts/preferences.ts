@@ -1,26 +1,32 @@
-import { MenuTemplate } from 'grammy-inline-menu'
+import { Menu } from '@grammyjs/menu'
 
-import { language } from '~/bot/layouts/preferences/language.js'
-import { privacy } from '~/bot/layouts/preferences/privacy.js'
-import { backButtons } from '~/bot/layouts/utils.js'
-import { type MyContext } from '~/bot/types/context.js'
+import type { MyContext } from '@/bot/types/context'
 
-export const preferences = new MenuTemplate<MyContext>(ctx => ({
-  text: ctx.t('menu-preferences'),
-  parse_mode: 'Markdown'
-}))
+import { safeEditText } from './shared'
 
-preferences.submenu(
-  ctx => ctx.t('menu-preferences-button.language'),
-  'lang',
-  language
+/** Preferences hub. Replaces legacy `preferences`. */
+export const preferencesMenu = new Menu<MyContext>('pack-prefs')
+
+preferencesMenu
+	.submenu(
+		ctx => ctx.t('menu-preferences-button.language'),
+		'pack-lang',
+		async ctx => {
+			await safeEditText(ctx, ctx.t('menu-language'), { parse_mode: 'Markdown' })
+		},
+	)
+	.submenu(
+		ctx => ctx.t('menu-preferences-button.privacy'),
+		'pack-privacy',
+		async ctx => {
+			await safeEditText(ctx, ctx.t('menu-privacy'), { parse_mode: 'Markdown' })
+		},
+	)
+	.row()
+
+preferencesMenu.back(
+	ctx => ctx.t('back-button'),
+	async ctx => {
+		await safeEditText(ctx, ctx.t('menu-general'))
+	},
 )
-
-preferences.submenu(
-  ctx => ctx.t('menu-preferences-button.privacy'),
-  'privacy',
-  privacy,
-  { joinLastRow: true }
-)
-
-preferences.manualRow(backButtons)

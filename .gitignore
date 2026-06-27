@@ -1,7 +1,7 @@
 node_modules
 .env
-.docker.env
+.env.*
+!.env.example
 dist
-.idea
-.vscode
-package-lock.json
+*.log
+.DS_Store

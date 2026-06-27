@@ -1,32 +1,40 @@
-import { type NextFunction } from 'grammy'
+import type { MiddlewareFn } from 'grammy'
+import type { MessageEntity } from 'grammy/types'
 
-import { type MyContext } from '~/bot/types/context.js'
+import type { MyContext } from '@/bot/types/context'
 
-export async function nonEnglishCommands (ctx: MyContext, next: NextFunction) {
-  if (ctx.msg == null || ctx.msg.text == null) {
-    await next()
-    return
-  }
+/**
+ * Telegram only tags `/command` as a `bot_command` entity for ASCII command
+ * names. Cyrillic command aliases (e.g. `/лобстер`) arrive without the entity,
+ * so `bot.command()` never matches. This synthesises the entity for any message
+ * that starts with `/`, honouring an explicit `@botusername` suffix.
+ */
+export const nonEnglishCommands: MiddlewareFn<MyContext> = async (ctx, next) => {
+	const msg = ctx.msg
+	if (msg?.text == null) {
+		await next()
+		return
+	}
 
-  let { text, entities: ents } = ctx.msg
-  if (text.startsWith('/')) {
-    // message is started as command, but not parsed
-    if (ents == null || ents.filter(x => x.type === 'bot_command').length > 0) {
-      let [commandName] = text.split(' ')
-      if (commandName.includes('@')) {
-        let botRelated: string
-        [commandName, botRelated] = commandName.split('@')
-        if (botRelated !== ctx.me.username) return
-      }
+	const text = msg.text
+	let entities: MessageEntity[] | undefined = msg.entities
 
-      if (ents == null) ents = []
-      ctx.msg.entities = [...ents, {
-        type: 'bot_command',
-        length: commandName.length,
-        offset: 0
-      }]
-    }
-  }
+	if (text.startsWith('/')) {
+		if (entities == null || entities.some(e => e.type === 'bot_command')) {
+			let [commandName] = text.split(' ')
+			if (commandName.includes('@')) {
+				const [name, botRelated] = commandName.split('@')
+				commandName = name
+				if (botRelated !== ctx.me.username) return
+			}
 
-  await next()
+			entities ??= []
+			;(msg as { entities?: MessageEntity[] }).entities = [
+				...entities,
+				{ type: 'bot_command', length: commandName.length, offset: 0 },
+			]
+		}
+	}
+
+	await next()
 }

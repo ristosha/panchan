@@ -1,146 +1,118 @@
-import { limit } from '@grammyjs/ratelimiter'
 import { Composer, InputFile, matchFilter } from 'grammy'
 
-import { awareScaleImage, awareScaleVideo } from '~/api/generators/aware-scale.js'
-import { createLoader } from '~/api/loader.js'
-import { resizeComposite } from '~/api/schema/composite.js'
-import { dupedRequest } from '~/bot/commands/utils/duped-request.js'
-import { type } from '~/bot/commands/utils/type.js'
-import getAnimationOrVideoId from '~/bot/helpers/get-animation-or-video-id.js'
-import { mediaTransaction } from '~/bot/helpers/media-transaction.js'
-import noMediaError from '~/bot/helpers/no-media-error.js'
-import { prepareMediaWithOutput } from '~/bot/helpers/prepare-media.js'
-import { saveMedia } from '~/bot/helpers/save-media.js'
-import autoQuote from '~/bot/middlewares/auto-quote.js'
-import { type MyContext } from '~/bot/types/context.js'
+import { resizeComposite } from '@/bot/helpers/args'
+import { sendTypingAction } from '@/bot/helpers/chat-action'
+import { getAnimationOrVideoId, getPhotoId } from '@/bot/helpers/extractors'
+import {
+	prepareMediaWithOutput,
+	runMediaJob,
+	saveMedia,
+	sendDupe,
+} from '@/bot/helpers/media-pipeline'
+import { noMediaError } from '@/bot/helpers/no-media-error'
+import { awareScaleRateLimit } from '@/bot/helpers/rate-limit'
+import { quote } from '@/bot/helpers/reply'
+import type { MyContext } from '@/bot/types/context'
+import { createLoader } from '@/services/generation'
 
 export const awareScale = new Composer<MyContext>()
-const command = awareScale.command([
-  'aware-scale', 'ascale', 'scale', 'жмых'
-])
+const command = awareScale.command(['aware-scale', 'ascale', 'scale', 'жмых'])
 
-// custom rate limit
-command.use(limit({
-  timeFrame: 60000,
-  limit: 1,
-  keyGenerator: (ctx) => {
-    if (ctx.callbackQuery != null) return undefined
-    return ctx.from?.id.toString()
-  },
-  onLimitExceeded: (ctx) => {
-    void ctx.reply(ctx.t('command-aware-scale.rate-limit'))
-  }
-}))
+command.use(awareScaleRateLimit)
 
-command.use(autoQuote())
-
+// video / animation / video sticker / video note
 command
-  .on([
-    'msg:video',
-    'msg:animation',
-    'msg:sticker:is_video',
-    'msg:video_note'
-  ])
-  .use(type)
-  .use(dupedRequest(
-    'AWARE_SCALE',
-    ['STICKER', 'VIDEO', 'VIDEO_NOTE', 'ANIMATION'],
-    async (ctx, dupedResultId) => {
-      await ctx.replyWithAnimation(dupedResultId)
-    }
-  ))
-  .use(async ctx => {
-    const {
-      inputFile,
-      outputFile,
-      fileName,
-      id,
-      sourceFileId,
-      watermark
-    } = await prepareMediaWithOutput(ctx, 'mp4')
+	.on(['msg:video', 'msg:animation', 'msg:sticker:is_video', 'msg:video_note'])
+	.use(sendTypingAction)
+	.use(async ctx => {
+		const handled = await sendDupe(ctx, 'AWARE_SCALE', resultFileId =>
+			ctx.replyWithAnimation(resultFileId, quote(ctx)),
+		)
+		if (handled) return
 
-    const loader = createLoader()
-    const msg = await ctx.reply(ctx.t('command-aware-scale.prepare'))
+		const { inputFile, outputFile, id, sourceFileId, fileName, watermark } =
+			await prepareMediaWithOutput(ctx, 'mp4')
 
-    loader.subscribe(
-      async (step, progress, remaining) => {
-        await msg.editText(ctx.t(`command-aware-scale.${step}`, {
-          progress, remaining
-        }), {
-          parse_mode: 'Markdown'
-        })
-      }, 10
-    )
+		const loader = createLoader()
+		const msg = await ctx.reply(ctx.t('command-aware-scale.prepare'))
+		// edit the progress message every 10% of progress
+		loader.subscribe(async (step, progress, remaining) => {
+			await ctx.api
+				.editMessageText(
+					msg.chat.id,
+					msg.message_id,
+					ctx.t(`command-aware-scale.${step}`, { progress, remaining }),
+				)
+				.catch(() => {})
+		}, 10)
 
-    await mediaTransaction({
-      ctx,
-      queue: 'scale',
-      disableLoader: true,
-      remove: [inputFile, outputFile],
-      run: async () => {
-        await awareScaleVideo({ inputFile, outputFile, loader, watermark })
-        const result = new InputFile(outputFile, fileName)
-        const {
-          resultFileId,
-          resultFileUniqueId
-        } = getAnimationOrVideoId(await ctx.replyWithAnimation(result))
-        await saveMedia({
-          ctx,
-          id,
-          sourceFileId,
-          resultFileId,
-          resultFileUniqueId,
-          type: 'AWARE_SCALE'
-        })
-        await msg.delete()
-      }
-    })
-  })
+		await runMediaJob({
+			ctx,
+			disableLoader: true,
+			remove: [inputFile, outputFile],
+			run: async () => {
+				await ctx.deps.gen.awareScaleVideo({ inputFile, outputFile, loader, watermark })
+				const sent = await ctx.replyWithAnimation(new InputFile(outputFile, fileName), quote(ctx))
+				const { resultFileId, resultFileUniqueId } = getAnimationOrVideoId(sent)
+				await saveMedia({
+					ctx,
+					id,
+					sourceFileId,
+					resultFileId,
+					resultFileUniqueId,
+					type: 'AWARE_SCALE',
+				})
+			},
+		})
 
+		await ctx.api.deleteMessage(msg.chat.id, msg.message_id).catch(() => {})
+	})
+
+// photo / static sticker
 command
-  .on([
-    'msg:photo',
-    'msg:sticker'
-  ])
-  .drop(matchFilter([
-    'msg:sticker:is_animated',
-    'msg:sticker:is_video',
-    'msg:sticker:premium_animation'
-  ]))
-  .use(async ctx => {
-    void ctx.replyWithChatAction('choose_sticker').catch()
-    const {
-      inputFile,
-      outputFile,
-      fileName,
-      id,
-      sourceFileId,
-      opts,
-      watermark
-    } = await prepareMediaWithOutput(ctx, 'png')
-    const args = resizeComposite.build(opts)
+	.on(['msg:photo', 'msg:sticker'])
+	.drop(
+		matchFilter([
+			'msg:sticker:is_animated',
+			'msg:sticker:is_video',
+			'msg:sticker:premium_animation',
+		]),
+	)
+	.use(sendTypingAction)
+	.use(async ctx => {
+		const { inputFile, outputFile, id, sourceFileId, fileName, opts, watermark } =
+			await prepareMediaWithOutput(ctx, 'png')
 
-    await mediaTransaction({
-      ctx,
-      queue: 'scale',
-      disableLoader: true,
-      remove: [inputFile, outputFile],
-      run: async () => {
-        await awareScaleImage({ inputFile, outputFile, watermark, ...args })
-        const result = new InputFile(outputFile, fileName)
-        const { photo } = await ctx.replyWithPhoto(result)
-        const { file_id: resultFileId, file_unique_id: resultFileUniqueId } = photo[photo.length - 1]
-        await saveMedia({
-          ctx,
-          id,
-          sourceFileId,
-          resultFileId,
-          resultFileUniqueId,
-          meta: opts,
-          type: 'AWARE_SCALE'
-        })
-      }
-    })
-  })
+		const args = resizeComposite.build(opts) as {
+			scale?: { width: number; height: number }
+			resize?: { width: number; height: number }
+		}
+
+		await runMediaJob({
+			ctx,
+			disableLoader: true,
+			remove: [inputFile, outputFile],
+			run: async () => {
+				await ctx.deps.gen.awareScaleImage({
+					inputFile,
+					outputFile,
+					watermark,
+					scale: args.scale,
+					resize: args.resize,
+				})
+				const sent = await ctx.replyWithPhoto(new InputFile(outputFile, fileName), quote(ctx))
+				const { resultFileId, resultFileUniqueId } = getPhotoId(sent)
+				await saveMedia({
+					ctx,
+					id,
+					sourceFileId,
+					resultFileId,
+					resultFileUniqueId,
+					meta: opts,
+					type: 'AWARE_SCALE',
+				})
+			},
+		})
+	})
 
 command.use(noMediaError(['photo', 'video', 'animation', 'photo-sticker', 'video-sticker']))

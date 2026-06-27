@@ -1,0 +1,51 @@
+services:
+  postgres:
+    image: postgres:18-alpine
+    container_name: panchan-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-panchan}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-panchan}
+    volumes:
+      - panchan-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-panchan}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    mem_limit: 512m
+
+  migrator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: migrator
+    container_name: panchan-migrator
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-panchan}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-panchan}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: 'no'
+
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: bot
+    container_name: panchan-bot
+    restart: always
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-panchan}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-panchan}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrator:
+        condition: service_completed_successfully
+    mem_limit: 1536m
+
+volumes:
+  panchan-postgres-data:

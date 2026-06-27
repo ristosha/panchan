@@ -1,115 +1,66 @@
 import { Composer } from 'grammy'
 
-import { type MyContext } from '~/bot/types/context.js'
-import { storage } from '~/storage.js'
+import type { MyContext } from '@/bot/types/context'
 
 export const stats = new Composer<MyContext>()
-const command = stats.command('stats')
 
-command.use(async (ctx) => {
-  // Fetch various statistics using Prisma ORM queries
-  const [
-    users,
-    userPrivate,
-    userGroup,
-    chats,
-    chatMember,
-    generatedMedia,
-    generatedMediaNonRandom,
-    generatedMediaText,
-    generatedMediaStretch,
-    generatedMediaDemotivator,
-    generatedMediaBalloon,
-    generatedMediaFisheye,
-    generatedMediaScale,
-    generatedMediaUses,
-    packs,
-    packElements
-  ] = await Promise.all([
-    storage.user.count(),
-    storage.user.count({ where: { lastPrivateContactedAt: { not: null } } }),
-    storage.user.count({ where: { lastGroupContactedAt: { not: null } } }),
-    storage.chat.count(),
-    storage.chatMember.count(),
-    storage.generatedMedia.count(),
-    storage.generatedMedia.count({ where: { linkedPackElements: { none: {} } } }),
-    storage.generatedMedia.count({ where: { type: 'TEXT' } }),
-    storage.generatedMedia.count({ where: { type: 'STRETCH' } }),
-    storage.generatedMedia.count({ where: { type: 'DEMOTIVATOR' } }),
-    storage.generatedMedia.count({ where: { type: 'BALLOON' } }),
-    storage.generatedMedia.count({ where: { type: 'FISHEYE' } }),
-    storage.generatedMedia.count({ where: { type: 'AWARE_SCALE' } }),
-    storage.generatedMediaUses.count(),
-    storage.pack.count(),
-    storage.packElement.count()
-  ])
+const TYPE_EMOJI: Record<string, string> = {
+	DEMOTIVATOR: '🖼',
+	TEXT: '✍️',
+	AWARE_SCALE: '🌀',
+	FISHEYE: '🐟',
+	STRETCH: '↔️',
+	BALLOON: '🎈',
+	BOOM: '💥',
+}
 
-  const [bigChats, lastChats, mostInstalledPacks] = await Promise.all([
-    storage.chat.findMany({
-      orderBy: {
-        memberCount: 'desc'
-      },
-      include: {
-        _count: {
-          select: { generatedMedia: true, members: true }
-        }
-      },
-      take: 5
-    }),
-    storage.chat.findMany({
-      orderBy: {
-        createdAt: 'desc'
-      },
-      include: {
-        _count: {
-          select: { generatedMedia: true, members: true }
-        }
-      },
-      take: 5
-    }),
-    storage.pack.findMany({
-      orderBy: { usedInChats: { _count: 'desc' } },
-      include: { _count: { select: { usedInChats: true } } },
-      take: 10
-    })
-  ])
+stats.command('stats', async ctx => {
+	const { repos } = ctx.deps
 
-  const replyMessage = `
-📊 Bot Statistics:
+	const [overview, users, chats, media, mediaUses, packs, packElements, premium, topPacks] =
+		await Promise.all([
+			repos.analytics.overview(),
+			repos.users.countAll(),
+			repos.chats.countAll(),
+			repos.media.countAll(),
+			repos.media.countUses(),
+			repos.packs.countAll(),
+			repos.packElements.countAll(),
+			repos.users.countPremium(),
+			repos.packs.getMostInstalled(5),
+		])
 
-👥 Users: ${users}
-🕊 Users in Private Chats: ${userPrivate}
-👥 Users in Group Chats: ${userGroup}
-🗣 Total Chats: ${chats}
-👤 Chat Members: ${chatMember}
-📸 Generated Media: ${generatedMedia}
-📸 Non-random Generated Media: ${generatedMediaNonRandom}
-📲 Media Uses: ${generatedMediaUses}
-📦 Packs: ${packs}
-🎨 Pack Elements: ${packElements}
+	const a = overview.activity
+	const trend = overview.monthly.map(m => `\`${m.m}\`  ${m.uses} (${m.uu} ppl)`).join('\n')
+	const byType = overview.byType
+		.map(t => `${TYPE_EMOJI[t.type] ?? '•'} \`${t.type.toLowerCase()}\`  ${t.uses} (${t.gens} gen)`)
+		.join('\n')
+	const packsList = topPacks.map(p => `📦 \`${p.name}\` — ${p.installCount}`).join('\n')
 
-Generated media:
-/text - ${generatedMediaText} times
-/dem - ${generatedMediaDemotivator} times
-/stretch - ${generatedMediaStretch} times
-/fisheye - ${generatedMediaFisheye} times
-/scale - ${generatedMediaScale} times
-/balloon - ${generatedMediaBalloon} times
+	const message = `📊 *Статистика panchan*
 
-Most installed Packs:
-${mostInstalledPacks
-    .map(p =>
-      `📦 \`${p.name}\` - ${p._count.usedInChats} chats`)
-    .join('\n')}
+🔥 *Активность*
+• сегодня: *${a.uses_24h}* исп. / *${a.uu_24h}* юзеров
+• 7 дней: *${a.uses_7d}* / *${a.uu_7d}* юзеров / ${a.chats_7d} чатов
+• 30 дней: *${a.uses_30d}* / *${a.uu_30d}* юзеров
+👤 активных юзеров: ${overview.active.a7} (7д) · ${overview.active.a30} (30д) · ${overview.active.a90} (90д)
+🆕 генераций: ${overview.gens.g7} (7д) · ${overview.gens.g30} (30д)
 
-Most Populous Chats:
-${bigChats
-    .map(chat => `👥 \`${String(chat.title)}\` - ${chat._count.members}/${chat.memberCount} m. (${chat._count.generatedMedia} media)`)
-    .join('\n')}
+📈 *Тренд* (исп./мес)
+${trend}
 
-Latest Chats:
-${lastChats.map(chat => `🗓  \`${String(chat.title)}\` - ${chat._count.members}/${chat.memberCount} m. (${chat._count.generatedMedia} media)`).join('\n')}
-`
+🎨 *По генераторам* (исп.)
+${byType}
 
-  await ctx.reply(replyMessage)
+🌐 группы: *${overview.group}* · личка: *${overview.private}*
+
+━━━━━━━━━━
+👥 ${users} юзеров · 🗣 ${chats} чатов
+📸 ${media} генераций · 📲 ${mediaUses} использований
+💎 ${premium} premium · 📦 ${packs} паков / ${packElements} элементов
+
+*Топ паков:*
+${packsList}`
+
+	await ctx.reply(message)
 })

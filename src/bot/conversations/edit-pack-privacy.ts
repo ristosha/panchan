@@ -1,53 +1,56 @@
-import { hydrate } from '@grammyjs/hydrate'
 import { Keyboard } from 'grammy'
 
-import { editPackDescription } from '~/bot/conversations/edit-pack-description.js'
-import { stateMiddlewares } from '~/bot/middlewares/index.js'
-import { i18n } from '~/bot/plugins/i18n.js'
-import { type MyContext, type MyConversation } from '~/bot/types/context.js'
-import { storage } from '~/storage.js'
+import type { MyConversation, MyConversationContext } from '@/bot/types/context'
 
-export async function editPackPrivacy (conversation: MyConversation, ctx: MyContext) {
-  await conversation.run(i18n)
-  await conversation.run(hydrate())
-  await conversation.run(stateMiddlewares)
+import { editPackDescriptionStep } from './edit-pack-description'
+import { ownUserId } from './shared'
 
-  const editingPackId = ctx.session.data.menu.editingPack
+/**
+ * Privacy step of the pack edit/create chain (private vs public), then chains into
+ * description -> nsfw. Mirrors the legacy `edit-pack-privacy` conversation.
+ */
+export async function editPackPrivacyStep(
+	conversation: MyConversation,
+	ctx: MyConversationContext,
+	packId: number,
+	userId: number,
+): Promise<void> {
+	const privateButton = ctx.t('conv-create-pack-button.private')
+	const publicButton = ctx.t('conv-create-pack-button.public')
 
-  const privateButton = ctx.t('conv-create-pack-button.private')
-  const publicButton = ctx.t('conv-create-pack-button.public')
+	const keyboard = new Keyboard().text(privateButton).text(publicButton).resized().oneTime()
+	const msg = await ctx.reply(ctx.t('conv-create-pack.step-3'), { reply_markup: keyboard })
 
-  const keyboard = new Keyboard()
-    .text(privateButton)
-    .text(publicButton)
+	const { message } = await conversation.waitFor('message:text')
+	const data = message.text
+	if (!data) {
+		await msg.delete().catch(() => {})
+		await ctx.reply(ctx.t('conv-create-pack.cancelled'), {
+			reply_markup: { remove_keyboard: true },
+		})
+		return
+	}
 
-  const msg = await ctx.reply(
-    ctx.t('conv-create-pack.step-3'),
-    { reply_markup: keyboard }
-  )
+	const isPrivate = data === privateButton
+	await conversation.external(() => ctx.deps.repos.packs.setPrivacy(packId, userId, isPrivate))
 
-  const { msg: { text: data } } = await conversation.waitFor('msg')
-  if (data == null || data.length === 0) {
-    await msg.delete().catch()
-    await ctx.reply(ctx.t('conv-create-pack.cancelled'))
-    return
-  }
+	await editPackDescriptionStep(conversation, ctx, packId, userId)
+}
 
-  const isPrivate = data === privateButton
-
-  const userId = (await ctx.state.user()).id
-  await conversation.external(async () => (
-    await storage.pack.update({
-      where: {
-        id: editingPackId,
-        OR: [
-          { authorId: userId },
-          { editors: { some: { id: userId } } }
-        ]
-      },
-      data: { private: isPrivate }
-    })
-  ))
-
-  await editPackDescription(conversation, ctx)
+/**
+ * Standalone "Edit pack" conversation (entered from the pack menu's edit button).
+ * Runs the full privacy -> description -> nsfw chain on an existing pack. The pack
+ * id is passed as an argument to `ctx.conversation.enter('pack-edit', packId)`.
+ */
+export async function editPackConversation(
+	conversation: MyConversation,
+	ctx: MyConversationContext,
+	packId: number,
+): Promise<void> {
+	const userId = await ownUserId(conversation, ctx)
+	if (userId == null) {
+		await ctx.reply(ctx.t('conv-create-pack.cancelled'))
+		return
+	}
+	await editPackPrivacyStep(conversation, ctx, packId, userId)
 }

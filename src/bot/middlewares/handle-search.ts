@@ -1,160 +1,75 @@
-import { type GeneratedMedia, type MediaMIME, type PackElementType } from '@prisma/client'
 import { Composer } from 'grammy'
-import { type InlineQueryResult } from 'grammy/types'
+import type { InlineQueryResult } from 'grammy/types'
 
-import { parseArgs } from '~/bot/helpers/parse-args.js'
-import { type MyContext } from '~/bot/types/context.js'
-import { storage, type StorageTypes } from '~/storage.js'
+import { parseArgs } from '@/bot/helpers/args'
+import type { MyContext } from '@/bot/types/context'
+import type { InlineSearchParams } from '@/repositories'
+
+type ElementKind = NonNullable<InlineSearchParams['elementTypes']>[number]
+type Mime = 'PHOTO' | 'VIDEO' | 'STICKER' | 'ANIMATION' | 'VIDEO_NOTE'
 
 export const handleSearch = new Composer<MyContext>()
 
-handleSearch.inlineQuery(/.*/, async (ctx) => {
-  const { query, offset: offsetStr } = ctx.inlineQuery
+/**
+ * Inline search over the user's visible generated media.
+ *
+ * AUDIT FIXES #2/#6: the heavy query lives in `repos.media.searchInline`, which
+ * selects only `mime` + `resultFileId`, uses the FTS index for the russian
+ * full-text term, and applies the visibility OR. Here we just parse the query
+ * flags and shape the inline answer.
+ */
+handleSearch.inlineQuery(/.*/, async ctx => {
+	const { query, offset: offsetStr } = ctx.inlineQuery
 
-  await ctx.state.chatMember?.()
+	let offset = Number.parseInt(offsetStr, 10)
+	if (Number.isNaN(offset)) offset = 0
 
-  let skip = parseInt(offsetStr)
-  if (isNaN(skip)) skip = 0
+	const params: InlineSearchParams = {
+		telegramId: BigInt(ctx.inlineQuery.from.id),
+		limit: 30,
+		offset,
+	}
 
-  const input: StorageTypes.GeneratedMediaFindManyArgs = {
-    where: {
-      mime: {
-        in: ['PHOTO', 'ANIMATION']
-      },
-      author: {
-        searchIncluded: true
-      },
-      OR: [
-        {
-          chat: {
-            members: {
-              some: {
-                user: {
-                  telegramId: ctx.inlineQuery.from.id
-                }
-              }
-            }
-          }
-        },
-        {
-          uses: {
-            some: {
-              usedByTelegramId: ctx.inlineQuery.from.id
-            }
-          }
-        },
-        {
-          uses: {
-            some: {
-              chat: {
-                members: {
-                  some: {
-                    user: {
-                      telegramId: ctx.inlineQuery.from.id
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      ]
-    },
-    orderBy: {
-      uses: {
-        _count: 'desc'
-      }
-    },
-    take: 30
-  }
+	if (query != null && query.length > 0) {
+		const args = parseArgs(query)
 
-  let results: GeneratedMedia[]
-  if (query == null || query.length === 0) {
-    results = await storage.generatedMedia.findMany({
-      ...input,
-      skip
-    })
-  } else {
-    const args = parseArgs(query)
-    const searchArgs = { ...input, skip }
+		if (args.rtitle === true || args.rmedia === true) {
+			const types: ElementKind[] = []
+			if (args.rtitle === true) types.push('TEXT')
+			if (args.rmedia === true) types.push('PHOTO', 'STICKER', 'ANIMATION', 'VIDEO')
+			params.elementTypes = types
+		}
 
-    if (args.rtitle === true || args.rmedia === true) {
-      const types: PackElementType[] = []
-      if (args.rtitle === true) types.push('TEXT')
-      if (args.rmedia === true) types.push('PHOTO', 'STICKER', 'ANIMATION', 'VIDEO')
+		if (args.new === true || args.sortdate === true) params.sortByDate = true
+		// admin-only: -all searches across ALL chats (bypasses the visibility filter)
+		if (args.all === true && ctx.deps.config.isAdmin(ctx.inlineQuery.from.id)) {
+			params.all = true
+		}
+		if (args._.length > 0) params.term = args._
+	}
 
-      searchArgs.where = {
-        ...searchArgs.where,
-        linkedPackElements: {
-          some: {
-            type: {
-              in: types
-            }
-          }
-        }
-      }
-    }
+	const results = await ctx.deps.repos.media.searchInline(params)
 
-    if (args.sortdate === true) {
-      searchArgs.orderBy = {
-        createdAt: 'desc'
-      }
-    }
+	const answer = results
+		.map((m, index) => toInlineResult(String(offset + index), m.mime, m.resultFileId))
+		.filter((r): r is InlineQueryResult => r != null)
 
-    if (args._.length > 0) {
-      searchArgs.where = {
-        ...searchArgs.where,
-        content: {
-          search: processString(args._)
-        }
-      }
-    }
-
-    results = await storage.generatedMedia.findMany(searchArgs)
-  }
-
-  const answer = results
-    .map((m, id) => toInlineResult(String(skip + id), m))
-    .filter(m => m != null) as InlineQueryResult[]
-
-  await ctx.answerInlineQuery(answer, {
-    cache_time: 5,
-    next_offset: results.length !== 0 ? String(skip + results.length) : undefined,
-    is_personal: false
-  })
+	await ctx.answerInlineQuery(answer, {
+		cache_time: 5,
+		next_offset: results.length !== 0 ? String(offset + results.length) : undefined,
+		is_personal: false,
+	})
 })
 
-function mapMime (generatedMediaType: MediaMIME): InlineQueryResult['type'] {
-  switch (generatedMediaType) {
-    case 'ANIMATION':
-      return 'mpeg4_gif'
-    case 'PHOTO':
-      return 'photo'
-    case 'VIDEO':
-      return 'video'
-    default:
-      return 'document'
-  }
-}
-
-function toInlineResult (id: string, generatedMedia: GeneratedMedia): InlineQueryResult | null {
-  const mime = mapMime(generatedMedia.mime)
-  switch (mime) {
-    case 'photo': {
-      return { id, type: mime, photo_file_id: generatedMedia.resultFileId }
-    }
-    case 'mpeg4_gif': {
-      return { id, type: mime, mpeg4_file_id: generatedMedia.resultFileId }
-    }
-    case 'video': {
-      return { id, type: mime, title: 'Demotivator', video_file_id: generatedMedia.resultFileId }
-    }
-  }
-  return null
-}
-
-function processString (input: string): string {
-  const cleanString = input.replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, '').toLowerCase()
-  const words = cleanString.split(/\s+/)
-  return words.join(':* & ') + ':*'
+function toInlineResult(id: string, mime: Mime, resultFileId: string): InlineQueryResult | null {
+	switch (mime) {
+		case 'PHOTO':
+			return { id, type: 'photo', photo_file_id: resultFileId }
+		case 'ANIMATION':
+			return { id, type: 'mpeg4_gif', mpeg4_file_id: resultFileId }
+		case 'VIDEO':
+			return { id, type: 'video', title: 'Demotivator', video_file_id: resultFileId }
+		default:
+			return null
+	}
 }

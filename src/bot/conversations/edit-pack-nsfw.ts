@@ -1,54 +1,39 @@
-import { hydrate } from '@grammyjs/hydrate'
 import { Keyboard } from 'grammy'
 
-import { stateMiddlewares } from '~/bot/middlewares/index.js'
-import { i18n } from '~/bot/plugins/i18n.js'
-import { type MyContext, type MyConversation } from '~/bot/types/context.js'
-import { storage } from '~/storage.js'
+import type { MyConversation, MyConversationContext } from '@/bot/types/context'
 
-export async function editPackNsfw (conversation: MyConversation, ctx: MyContext) {
-  await conversation.run(i18n)
-  await conversation.run(hydrate())
-  await conversation.run(stateMiddlewares)
+/**
+ * Final step of the pack edit/create chain: NSFW flag (stored as the `nsfw` tag).
+ * Mirrors the legacy `edit-pack-nsfw` conversation. `packId`/`userId` are threaded
+ * in from the previous step rather than read from session.
+ */
+export async function editPackNsfwStep(
+	conversation: MyConversation,
+	ctx: MyConversationContext,
+	packId: number,
+	userId: number,
+): Promise<void> {
+	const yesButton = ctx.t('conv-create-pack-button.yes')
+	const noButton = ctx.t('conv-create-pack-button.no')
 
-  const editingPackId = ctx.session.data.menu.editingPack
+	const keyboard = new Keyboard().text(yesButton).text(noButton).resized().oneTime()
+	const msg = await ctx.reply(ctx.t('conv-create-pack.step-5'), { reply_markup: keyboard })
 
-  const yesButton = ctx.t('conv-create-pack-button.yes')
-  const noButton = ctx.t('conv-create-pack-button.no')
+	const { message } = await conversation.waitFor('message:text')
+	const data = message.text
+	if (!data) {
+		await msg.delete().catch(() => {})
+		await ctx.reply(ctx.t('conv-create-pack.cancelled'), {
+			reply_markup: { remove_keyboard: true },
+		})
+		return
+	}
 
-  const keyboard = new Keyboard()
-    .text(yesButton)
-    .text(noButton)
+	const nsfw = data === yesButton
+	await conversation.external(() =>
+		ctx.deps.repos.packs.setTags(packId, userId, nsfw ? ['nsfw'] : []),
+	)
 
-  const msg = await ctx.reply(
-    ctx.t('conv-create-pack.step-5'),
-    { reply_markup: keyboard }
-  )
-
-  const { msg: { text: data } } = await conversation.waitFor('msg')
-  if (data == null || data.length === 0) {
-    await msg.delete().catch()
-    await ctx.reply(ctx.t('conv-create-pack.cancelled'))
-    return
-  }
-
-  const nsfw = data === yesButton
-
-  const userId = (await ctx.state.user()).id
-  await conversation.external(async () => (
-    await storage.pack.update({
-      where: {
-        id: editingPackId,
-        OR: [
-          { authorId: userId },
-          { editors: { some: { id: userId } } }
-        ]
-      },
-      data: { tags: { set: nsfw ? ['nsfw'] : [] } }
-    })
-  ))
-
-  await msg.delete().catch()
-  ctx.session.data.menu.editingPack = null
-  await ctx.reply(ctx.t('conv-create-pack.ok'), { reply_markup: { remove_keyboard: true } })
+	await msg.delete().catch(() => {})
+	await ctx.reply(ctx.t('conv-create-pack.ok'), { reply_markup: { remove_keyboard: true } })
 }

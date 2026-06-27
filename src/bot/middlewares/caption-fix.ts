@@ -1,15 +1,16 @@
-import { type NextFunction } from 'grammy'
+import type { MiddlewareFn } from 'grammy'
 
-export async function captionFix (ctx, next: NextFunction) {
-  if (ctx.message?.caption != null) {
-    ctx.message.text = ctx.message.caption
-  }
+import type { MyContext } from '@/bot/types/context'
 
-  // if (ctx.message != null && ctx.msg?.caption_entities != null && ctx.msg.entities == null) {
-  //   ctx.message.text = ctx.msg.caption
-  //   ctx.msg.text = ctx.msg.caption
-  //   ctx.msg.entities = ctx.msg.caption_entities
-  // }
-
-  await next()
+/**
+ * Copy a message caption into `.text` so command/argument parsing works for
+ * media sent WITH a caption (e.g. a photo captioned `/dem hello`). The
+ * `non-english-commands` middleware then synthesises the `bot_command` entity.
+ */
+export const captionFix: MiddlewareFn<MyContext> = async (ctx, next) => {
+	if (ctx.message?.caption != null && ctx.message.text == null) {
+		// grammy's Message.text is a plain mutable field
+		;(ctx.message as { text?: string }).text = ctx.message.caption
+	}
+	await next()
 }

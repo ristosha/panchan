@@ -1,102 +1,64 @@
-import { type PackElementType } from '@prisma/client'
 import { Composer } from 'grammy'
 
-import { extractId, extractMedia } from '~/bot/helpers/extractors.js'
-import autoQuote from '~/bot/middlewares/auto-quote.js'
-import { type MyContext } from '~/bot/types/context.js'
-import { storage } from '~/storage.js'
+import type { MyContext } from '@/bot/types/context'
 
+import { extractId, extractMedia, type PackElementKind } from './pack-extractors'
+
+const MEDIA_KINDS: PackElementKind[] = ['VIDEO', 'ANIMATION', 'PHOTO']
+
+/** `/editel <elementId> <content|media>` — overwrite an element you own/edit. */
 export const editElement = new Composer<MyContext>()
 const edit = editElement.command('editel')
-edit.use(autoQuote())
 
-edit.on(['msg:photo', 'msg:video', 'msg:animation'], async (ctx) => {
-  const { id } = extractId(ctx)
-  if (isNaN(id)) {
-    await ctx.reply(ctx.t('command-add.no-id'))
-    return
-  }
+edit.on(['msg:photo', 'msg:video', 'msg:animation'], async ctx => {
+	const { id } = extractId(ctx)
+	if (Number.isNaN(id)) {
+		await ctx.reply(ctx.t('command-add.no-id'))
+		return
+	}
 
-  const { fileId: content, type } = extractMedia(ctx)
-  if (content == null) {
-    await ctx.reply(ctx.t('command-add.incompatible-types'))
-    return
-  }
+	const { fileId, type } = extractMedia(ctx)
+	if (fileId == null) {
+		await ctx.reply(ctx.t('command-add.incompatible-types'))
+		return
+	}
 
-  const { id: userId } = await ctx.state.user()
-  const updated = await editPackElement({
-    id,
-    type,
-    userId,
-    content
-  })
-  if (typeof updated === 'string') {
-    await ctx.reply(ctx.t(`command-add.${updated}`))
-    return
-  }
-
-  await ctx.reply(ctx.t('command-edit', { id }))
+	const result = await editPackElement(ctx, id, type, fileId)
+	if (result != null) {
+		await ctx.reply(ctx.t(`command-add.${result}`))
+		return
+	}
+	await ctx.reply(ctx.t('command-edit', { id }))
 })
 
-edit.on('msg', async (ctx) => {
-  const { id, content } = extractId(ctx)
-  if (isNaN(id)) {
-    await ctx.reply(ctx.t('command-add.no-id'))
-  }
+edit.on('msg', async ctx => {
+	const { id, content } = extractId(ctx)
+	if (Number.isNaN(id)) {
+		await ctx.reply(ctx.t('command-add.no-id'))
+		return
+	}
 
-  const { id: userId } = await ctx.state.user()
-  const updated = await editPackElement({
-    id,
-    userId,
-    content,
-    type: 'TEXT'
-  })
-  if (typeof updated === 'string') {
-    await ctx.reply(ctx.t(`command-add.${updated}`))
-    return
-  }
-
-  await ctx.reply(ctx.t('command-edit', { id }))
+	const result = await editPackElement(ctx, id, 'TEXT', content)
+	if (result != null) {
+		await ctx.reply(ctx.t(`command-add.${result}`))
+		return
+	}
+	await ctx.reply(ctx.t('command-edit', { id }))
 })
 
-interface EditPackElementParams {
-  id: number
-  userId: number
-  type: PackElementType
-  content: string
-}
+async function editPackElement(
+	ctx: MyContext,
+	id: number,
+	type: PackElementKind,
+	content: string,
+): Promise<'not-found' | 'incompatible-types' | null> {
+	const userId = (await ctx.state.user()).id
+	const element = await ctx.deps.repos.packElements.getOwnWithPackType(id, userId)
+	if (element == null) return 'not-found'
 
-async function editPackElement (params: EditPackElementParams) {
-  const { id, userId, content, type } = params
-  const element = await storage.packElement.findFirst({
-    where: {
-      id,
-      pack: {
-        OR: [
-          { authorId: userId },
-          { editors: { some: { id: userId } } }
-        ]
-      }
-    },
-    include: {
-      pack: { select: { type: true } }
-    }
-  })
+	if (element.packType === 'TITLES' && type !== 'TEXT') return 'incompatible-types'
+	if (element.packType === 'MEDIA' && !MEDIA_KINDS.includes(type)) return 'incompatible-types'
 
-  if (element == null) {
-    return 'not-found'
-  }
-
-  if (element.pack.type === 'TITLES' && type !== 'TEXT') {
-    return 'incompatible-types'
-  } else if (element.pack.type === 'MEDIA' && !(['VIDEO', 'ANIMATION', 'PHOTO'].includes(type))) {
-    return 'incompatible-types'
-  }
-
-  const pack = await storage.packElement.update({
-    where: { id },
-    data: { content, authorId: userId }
-  })
-
-  return pack
+	await ctx.deps.repos.packElements.update(id, { content, authorId: userId })
+	return null
 }
