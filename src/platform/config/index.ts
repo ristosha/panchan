@@ -47,7 +47,9 @@ const schema = z.object({
 
 	// retention (prune script)
 	SESSION_TTL_DAYS: z.coerce.number().int().default(30),
-	USES_TTL_DAYS: z.coerce.number().int().default(90),
+	// effectively "keep all" — usage rows are tiny (~3MB/yr) and power /stats
+	// analytics, so don't prune them by default; sessions are the real bloat.
+	USES_TTL_DAYS: z.coerce.number().int().default(3650),
 })
 
 export type Config = z.infer<typeof schema> & {
